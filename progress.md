@@ -141,3 +141,35 @@
   - The `bound` array and `mixer` types are `any` since Mixer class hasn't been ported yet (US-009)
   - `canDisable` checks `typeof el.disabled === 'boolean'` to detect button/input elements
 ---
+
+## 2026-03-05 - US-009
+- What was implemented: Mixer class (4,362 lines) converted from ES5 prototypal to TypeScript ES class
+- Files changed:
+  - `src/mixer.ts` — created as ES class implementing MixitupMixer interface with all methods from v3
+  - `src/operation.ts` — updated array types from `Element[]` to `any[]` for internal Target object storage
+  - `src/types/config.ts` — updated ConfigCallbacks signatures to include `instance` parameter matching v3 API
+- All ~91 `callActions`/`callFilters` hook calls removed; logic inlined
+- `mixitup.Base.call(this)` and prototypal inheritance removed
+- `h.addClass`/`h.removeClass` replaced with `el.classList.add`/`el.classList.remove`
+- `h.on`/`h.off` replaced with `addEventListener`/`removeEventListener`
+- `h.arrayFromList` replaced with `Array.from()`
+- `h.closestParent` replaced with `el.closest()`
+- `h.defer(mixitup.libraries)` replaced with native `Promise` constructor
+- Vendor-prefixed CSS (`mixitup.features.perspectiveProp` etc.) replaced with standard names
+- `var self = this` replaced with arrow functions and direct `this`
+- `MixerDom` inlined as typed property interface
+- `mixitup.instances` global replaced with module-level `Map<string, Mixer>`
+- `mixitup.controls` global replaced with module-level array import from `control.ts`
+- `mixitup.controlDefinitions` replaced with import from `control-definition.ts`
+- `TRANSFORM_DEFAULTS` replaces `mixitup.transformDefaults` as module-level const
+- `createStyleData()` factory replaces `new mixitup.StyleData()`
+- `createMoveData()` factory replaces `new mixitup.IMoveData()`
+- `willSort()` renamed to `willSortCheck()` to avoid conflict with `operation.willSort` property
+- All 25 public API method signatures preserved exactly as in v3
+- **Learnings for future iterations:**
+  - The Operation interface arrays (`show`, `hide`, `toShow`, etc.) store Target objects internally but were typed as `Element[]` — changed to `any[]` for flexibility
+  - ConfigCallbacks signatures in v3 pass `instance` as final argument — the type definitions needed updating
+  - The v3 `h.defer(mixitup.libraries)` pattern abstracted jQuery/Promise deferred — replaced with simple `new Promise()` constructor wrapper
+  - `checkProgress` is passed as a callback to `Target.move()` — needs `unknown` params to match IMoveData callback type
+  - The `parseMultimixArgs` coerces string command values (like `filter: '.class-a'`) into typed command objects via the respective parse methods
+---
