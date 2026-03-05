@@ -26,11 +26,11 @@ export interface ConfigBehavior {
 }
 
 export interface ConfigCallbacks {
-    onMixStart: ((state: MixitupState, futureState: MixitupState) => void) | null;
-    onMixBusy: ((state: MixitupState) => void) | null;
-    onMixEnd: ((state: MixitupState) => void) | null;
-    onMixFail: ((state: MixitupState) => void) | null;
-    onMixClick: ((this: Element, state: MixitupState, originalEvent: Event) => void | false) | null;
+    onMixStart: ((state: MixitupState, futureState: MixitupState, instance: any) => void) | null;
+    onMixBusy: ((state: MixitupState, instance: any) => void) | null;
+    onMixEnd: ((state: MixitupState, instance: any) => void) | null;
+    onMixFail: ((state: MixitupState, instance: any) => void) | null;
+    onMixClick: ((this: Element, state: MixitupState, originalEvent: Event, instance: any) => void | false) | null;
 }
 
 export interface ConfigControls {
