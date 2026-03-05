@@ -23,6 +23,7 @@ export function fire(
         futureState?: MixitupState;
         instance: any;
         originalEvent?: Event;
+        control?: Element;
     },
     doc?: Document
 ): void {
