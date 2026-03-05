@@ -120,3 +120,24 @@
   - `IMoveData.callback` signature is `(target, operation)` — the v3 code calls `self.callback.call(self, self.operation)`
   - `.chief/` directory is in `.gitignore` — PRD updates can't be committed
 ---
+
+## 2026-03-05 - US-008
+- What was implemented: Control class and ControlDefinition converted from ES5 prototypal to TypeScript ES classes/interfaces
+- Files changed:
+  - `src/control.ts` — created as ES class with typed properties and all methods from v3
+  - `src/control-definition.ts` — created with `ControlDefinition` interface, `createControlDefinition()` factory, and static `controlDefinitions` array
+  - `src/events.ts` — added optional `control` property to `fire()` detail parameter (used by `mixClick` event)
+- All ~28 `callActions`/`callFilters` hook calls removed; logic inlined
+- `mixitup.Base.call(this)` and prototypal inheritance removed
+- `h.addClass`/`h.removeClass` replaced with `el.classList.add`/`el.classList.remove`
+- `h.on`/`h.off` replaced with `addEventListener`/`removeEventListener`
+- `h.closestParent` replaced with `el.closest()`
+- `h.hasClass` replaced with `el.classList.contains()`
+- Module-level `controls` array exported (replaces `mixitup.controls`)
+- Module-level `controlDefinitions` array exported (replaces `mixitup.controlDefinitions`)
+- **Learnings for future iterations:**
+  - The `fire()` function needed an optional `control` property added to the detail type for the `mixClick` event
+  - `ControlDefinition` objects are frozen (immutable) — they're static config, not mutable state
+  - The `bound` array and `mixer` types are `any` since Mixer class hasn't been ported yet (US-009)
+  - `canDisable` checks `typeof el.disabled === 'boolean'` to detect button/input elements
+---
