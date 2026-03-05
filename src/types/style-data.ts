@@ -30,8 +30,9 @@ export interface IMoveData {
     posIn: StyleData | null;
     posOut: StyleData | null;
     operation: unknown;
-    callback: (() => void) | null;
+    callback: ((target: unknown, operation: unknown) => void) | null;
     statusChange: string;
     duration: number;
     staggerIndex: number;
+    tweenData: Record<string, any>;
 }
