@@ -14,18 +14,20 @@ import { createDefaultSelectors } from './selectors';
 import { createDefaultTemplates } from './templates';
 
 export function createDefaultConfig(): MixitupConfig {
-    return {
-        animation: createDefaultAnimation(),
-        behavior: createDefaultBehavior(),
-        callbacks: createDefaultCallbacks(),
-        controls: createDefaultControls(),
-        classNames: createDefaultClassNames(),
-        data: createDefaultData(),
-        debug: createDefaultDebug(),
-        layout: createDefaultLayout(),
-        load: createDefaultLoad(),
-        render: createDefaultRender(),
-        selectors: createDefaultSelectors(),
-        templates: createDefaultTemplates(),
+    const config = {
+        animation: Object.seal(createDefaultAnimation()),
+        behavior: Object.seal(createDefaultBehavior()),
+        callbacks: Object.seal(createDefaultCallbacks()),
+        controls: Object.seal(createDefaultControls()),
+        classNames: Object.seal(createDefaultClassNames()),
+        data: Object.seal(createDefaultData()),
+        debug: Object.seal(createDefaultDebug()),
+        layout: Object.seal(createDefaultLayout()),
+        load: Object.seal(createDefaultLoad()),
+        render: Object.seal(createDefaultRender()),
+        selectors: Object.seal(createDefaultSelectors()),
+        templates: Object.seal(createDefaultTemplates()),
     };
+
+    return Object.seal(config);
 }

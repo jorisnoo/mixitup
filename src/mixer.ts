@@ -1078,8 +1078,8 @@ export class Mixer implements MixitupMixer {
         }
 
         if (operation.willChangeLayout) {
-            this.dom.container!.classList.remove(operation.startContainerClassName);
-            this.dom.container!.classList.add(operation.newContainerClassName);
+            if (operation.startContainerClassName) this.dom.container!.classList.remove(operation.startContainerClassName);
+            if (operation.newContainerClassName) this.dom.container!.classList.add(operation.newContainerClassName);
         }
     }
 
@@ -1147,8 +1147,12 @@ export class Mixer implements MixitupMixer {
               parseFloat(parentStyle!.borderLeft) -
               parseFloat(parentStyle!.borderRight);
 
-        operation.viewportDeltaX = operation.docState!.viewportWidth - this.dom.document!.documentElement.clientWidth;
-        operation.viewportDeltaY = operation.docState!.viewportHeight - this.dom.document!.documentElement.clientHeight;
+        const docEl = this.dom.document && 'documentElement' in this.dom.document
+            ? (this.dom.document as Document).documentElement
+            : null;
+
+        operation.viewportDeltaX = operation.docState!.viewportWidth - (docEl ? docEl.clientWidth : 0);
+        operation.viewportDeltaY = operation.docState!.viewportHeight - (docEl ? docEl.clientHeight : 0);
 
         if (operation.willSort) {
             this.printSort(true, operation);
@@ -1163,8 +1167,8 @@ export class Mixer implements MixitupMixer {
         }
 
         if (operation.willChangeLayout) {
-            this.dom.container!.classList.remove(operation.newContainerClassName);
-            this.dom.container!.classList.add(this.config.layout.containerClassName);
+            if (operation.newContainerClassName) this.dom.container!.classList.remove(operation.newContainerClassName);
+            if (this.config.layout.containerClassName) this.dom.container!.classList.add(this.config.layout.containerClassName);
         }
     }
 
@@ -1364,8 +1368,8 @@ export class Mixer implements MixitupMixer {
         }
 
         if (operation.willChangeLayout) {
-            this.dom.container!.classList.remove(this.config.layout.containerClassName);
-            this.dom.container!.classList.add(operation.newContainerClassName);
+            if (this.config.layout.containerClassName) this.dom.container!.classList.remove(this.config.layout.containerClassName);
+            if (operation.newContainerClassName) this.dom.container!.classList.add(operation.newContainerClassName);
         }
     }
 
@@ -1467,8 +1471,8 @@ export class Mixer implements MixitupMixer {
         (this.dom.parent! as any).style.perspectiveOrigin = '';
 
         if (operation.willChangeLayout) {
-            this.dom.container!.classList.remove(operation.startContainerClassName);
-            this.dom.container!.classList.add(operation.newContainerClassName);
+            if (operation.startContainerClassName) this.dom.container!.classList.remove(operation.startContainerClassName);
+            if (operation.newContainerClassName) this.dom.container!.classList.add(operation.newContainerClassName);
         }
 
         if ((operation.toRemove as Target[]).length) {

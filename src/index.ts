@@ -4,7 +4,7 @@ import type { MixitupMixer } from './types/public-api';
 import { Mixer, instances } from './mixer';
 import { Collection } from './collection';
 import { messages } from './messages';
-import { isElement, randomHex } from './helpers';
+import { isElement, randomHex, template } from './helpers';
 
 // Re-export public types for consumer use
 export type { MixitupConfig } from './types/config';
@@ -165,5 +165,11 @@ function mixitup(
 
     return mixerInstances[0];
 }
+
+// Named exports for internal use by tests and advanced consumers
+export { Mixer } from './mixer';
+export { Collection } from './collection';
+export { messages } from './messages';
+export { template } from './helpers';
 
 export default mixitup;
