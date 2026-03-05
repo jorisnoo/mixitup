@@ -25,16 +25,13 @@ Demos for the Pagination and MultiFilter extensions can be found linked to in th
 
 ---
 
-# MixItUp 3
+# MixItUp 4
 
 [![Latest Release](https://img.shields.io/npm/v/mixitup.svg?style=flat-square)](https://www.npmjs.com/package/mixitup)
-[![jsDelivr Hits](https://data.jsdelivr.com/v1/package/gh/patrickkunka/mixitup/badge?style=rounded)](https://www.jsdelivr.com/package/gh/patrickkunka/mixitup)
 
 MixItUp is a high-performance, dependency-free library for animated DOM manipulation, giving you the power to filter, sort, add and remove DOM elements with beautiful animations.
 
 MixItUp plays nice with your existing HTML and CSS, making it a great choice for responsive layouts and compatible with inline-flow, percentages, media queries, flexbox and more.
-
-Migrating from MixItUp 2? Check out the [MixItUp 3 Migration Guide](./docs/mixitup-3-migration-guide.md).
 
 #### Licensing
 
@@ -80,14 +77,12 @@ New to MixItUp 3, the Dataset API allows interaction with MixItUp purely via cha
 
 #### Browser Support
 
-MixItUp 3 has been tested for compatibility with the following browsers.
+MixItUp 4 targets modern browsers only.
 
-- Chrome 16+
-- Firefox 16+
-- Safari 6.2+
-- Yandex 14+
-- Edge 13+
-- IE 10+ (with animations), IE 8-9 (no animations)
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
 
 ## Getting Started
 
@@ -160,47 +155,19 @@ Further reading: [MixItUp Grid Layouts](./tutorials/mixitup-grid-layouts.md)
 
 ### Loading MixItUp
 
-Firstly, load the MixItUp JavaScript library using the preferred method for your project.
+Install MixItUp via your package manager of choice:
 
-#### Script Tag
-
-The most simple way to load MixItUp in your project is to include it via a `<script>` tag before the closing `</body>` tag on your page.
-
-```html
-        ...
-
-        <script src="/path/to/mixitup.min.js"></script>
-    </body>
-</html>
+```
+npm install mixitup
 ```
 
-With this technique, the MixItUp factory function will be made available via the global variable `mixitup`.
-
-#### Module Import
-
-If you are building a modular JavaScript project with Webpack, Browserify, or RequireJS, MixItUp can be installed using your package manager of choice (e.g. npm, jspm, yarn) and then imported into any of your project's modules.
-
-`npm install mixitup --save`
+Then import it as an ES module:
 
 ```js
-// ES2015
-
 import mixitup from 'mixitup';
 ```
 
-```js
-// CommonJS
-
-var mixitup = require('mixitup');
-```
-
-```js
-// AMD
-
-require(['mixitup'], function(mixitup) {
-
-});
-```
+MixItUp 4 is distributed as an ESM bundle with TypeScript declarations included.
 
 ### Creating a Mixer
 
@@ -211,13 +178,13 @@ Call the factory function passing a selector string or a reference to your conta
 ###### Example: Instantiating a mixer with a selector string
 
 ```js
-var mixer = mixitup('.container');
+const mixer = mixitup('.container');
 ```
 
 ###### Example: Instantiating a mixer with an element reference
 
 ```js
-var mixer = mixitup(containerEl);
+const mixer = mixitup(containerEl);
 ```
 
 Your mixer is now ready for you to interact with, either via its controls (see above), or its API (see [Mixer API Methods](./docs/mixitup.Mixer.md)). Click a control or call an API method to check that everything is working correctly.
@@ -231,7 +198,7 @@ Further reading: [Configuration Object](/docs/mixitup.Config.md)
 ###### Example: Passing a configuration object
 
 ```js
-var mixer = mixitup(containerEl, {
+const mixer = mixitup(containerEl, {
     selectors: {
         target: '.blog-item'
     },
@@ -248,7 +215,7 @@ If you wish to interact with your mixer via its API, the mixer reference returne
 ###### Example: Calling an API method
 
 ```js
-var mixer = mixitup(containerEl);
+const mixer = mixitup(containerEl);
 
 mixer.filter('.category-a');
 ```
@@ -260,3 +227,21 @@ Further reading: [Mixer API Methods](./docs/mixitup.Mixer.md)
 You may wish to use MixItUp 3's new "dataset" API. Dataset is designed for use in API-driven JavaScript applications, and can be used instead of DOM-based methods such as `.filter()`, `.sort()`, `.insert()`, etc. When used, insertion, removal, sorting and pagination can be achieved purely via changes to your data model, without the uglyness of having to interact with or query the DOM directly.
 
 Further reading: [Using the Dataset API](./tutorials/using-the-dataset-api.md)
+
+## Development
+
+### Building
+
+```
+npm run build
+```
+
+Produces an ESM bundle at `dist/mixitup.js` with source maps and TypeScript declarations in `dist/types/`.
+
+### Testing
+
+```
+npm test
+```
+
+Runs the full test suite via Vitest with jsdom.
