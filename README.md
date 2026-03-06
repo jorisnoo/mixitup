@@ -1,31 +1,6 @@
-# 📣 November 2024 Update 📣
-
-### Changes to License Model
-
-As MixItUp turns 10 years old (and having remained unchanged since ~2018) it will be moving to a **fully open source** and publicly available model. This means that from 1st November 2024, you no longer need to purchase a license for commercial use.
-
-Additionally, the MixItUp project and its extensions will become **fully archived** meaning that no future changes will be made. MixItUp has been stable for many years and remains in use across tens of thousands of web sites and applications worldwide. If you wish to use it on a brand-new project and it meets your needs, then you should feel confident in doing so provided you do not require support.
-
-### Pagination and MultiFilter Extensions
-
-The Pagination and MultiFilter extensions, which were previously closed source and only available via purchase, have also been been made publicly available on GitHub, and may now be used without purchase or a commercial license.
-
-- [www.github.com/patrickkunka/mixitup-pagination](https://www.github.com/patrickkunka/mixitup-pagination)
-- [www.github.com/patrickkunka/mixitup-multifilter](https://www.github.com/patrickkunka/mixitup-multifilter)
-
-### Documentation Website
-
-The documentation website has been retired in favor of GitHub. All documentation and tutorials are available via this GitHub repository, or the repository of the relevant extension (see above).
-
-### Demos
-
-Hosted interactive demos may be found at [patrickkunka.github.io/mixitup/demos](https://patrickkunka.github.io/mixitup/demos). The documented source code of each demo can be found in the [/demos](./demos/) directory if this repository.
-
-Demos for the Pagination and MultiFilter extensions can be found linked to in their respective repositories.
-
----
-
 # MixItUp 4
+
+> A modernised fork of [patrickkunka/mixitup](https://github.com/patrickkunka/mixitup), rewritten in TypeScript with modern tooling (Vite, Vitest). ESM-only, targeting modern browsers.
 
 [![Latest Release](https://img.shields.io/npm/v/mixitup.svg?style=flat-square)](https://www.npmjs.com/package/mixitup)
 
@@ -168,6 +143,10 @@ import mixitup from 'mixitup';
 ```
 
 MixItUp 4 is distributed as an ESM bundle with TypeScript declarations included.
+
+```ts
+import type { MixitupConfig, MixitupState, MixitupMixer } from 'mixitup';
+```
 
 ### Creating a Mixer
 
