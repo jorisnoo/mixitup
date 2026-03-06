@@ -1,4 +1,4 @@
-# MixItUp 4
+# MixItUp
 
 > A modernised fork of [patrickkunka/mixitup](https://github.com/patrickkunka/mixitup), rewritten in TypeScript with modern tooling (Vite, Vitest). ESM-only, targeting modern browsers.
 
@@ -48,11 +48,11 @@ A look at how we can use the configuration object to load MixItUp in a state oth
 
 ##### [Using the Dataset API](./tutorials/using-the-dataset-api.md)
 
-New to MixItUp 3, the Dataset API allows interaction with MixItUp purely via changes to a data model, avoiding the use of DOM selectors.
+The Dataset API allows interaction with MixItUp purely via changes to a data model, avoiding the use of DOM selectors.
 
 #### Browser Support
 
-MixItUp 4 targets modern browsers only.
+This fork targets modern browsers only.
 
 - Chrome (latest)
 - Firefox (latest)
@@ -142,7 +142,7 @@ Then import it as an ES module:
 import mixitup from 'mixitup';
 ```
 
-MixItUp 4 is distributed as an ESM bundle with TypeScript declarations included.
+This fork is distributed as an ESM bundle with TypeScript declarations included.
 
 ```ts
 import type { MixitupConfig, MixitupState, MixitupMixer } from 'mixitup';
@@ -203,7 +203,7 @@ Further reading: [Mixer API Methods](./docs/mixitup.Mixer.md)
 
 #### Building a modern JavaScript application?
 
-You may wish to use MixItUp 3's new "dataset" API. Dataset is designed for use in API-driven JavaScript applications, and can be used instead of DOM-based methods such as `.filter()`, `.sort()`, `.insert()`, etc. When used, insertion, removal, sorting and pagination can be achieved purely via changes to your data model, without the uglyness of having to interact with or query the DOM directly.
+You may wish to use MixItUp's "dataset" API. Dataset is designed for use in API-driven JavaScript applications, and can be used instead of DOM-based methods such as `.filter()`, `.sort()`, `.insert()`, etc. When used, insertion, removal, sorting and pagination can be achieved purely via changes to your data model, without the uglyness of having to interact with or query the DOM directly.
 
 Further reading: [Using the Dataset API](./tutorials/using-the-dataset-api.md)
 
