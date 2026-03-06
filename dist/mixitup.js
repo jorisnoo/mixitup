@@ -1001,7 +1001,7 @@ class bt {
   }
   getNextSibling(e, t, i) {
     let n = null;
-    return e = Math.max(e, 0), t && i === "before" ? n = t : t && i === "after" ? n = t.nextElementSibling || null : this.targets.length > 0 && typeof e < "u" ? n = e < this.targets.length || !this.targets.length ? this.targets[e].dom.el : this.targets[this.targets.length - 1].dom.el.nextElementSibling : this.targets.length === 0 && this.dom.parent.children.length > 0 && (this.config.layout.siblingAfter ? n = this.config.layout.siblingAfter : this.config.layout.siblingBefore ? n = this.config.layout.siblingBefore.nextElementSibling : n = this.dom.parent.children[0]), n;
+    return e = Math.max(e, 0), t && i === "before" ? n = t : t && i === "after" ? n = t.nextElementSibling || null : this.targets.length > 0 && typeof e < "u" ? n = e < this.targets.length ? this.targets[e].dom.el : this.targets[this.targets.length - 1].dom.el.nextElementSibling : this.targets.length === 0 && this.dom.parent.children.length > 0 && (this.config.layout.siblingAfter ? n = this.config.layout.siblingAfter : this.config.layout.siblingBefore ? n = this.config.layout.siblingBefore.nextElementSibling : n = this.dom.parent.children[0]), n;
   }
   filterOperation(e) {
     const t = e.newFilter.action;

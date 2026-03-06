@@ -66,13 +66,13 @@ describe('mixitup.Mixer', () => {
             const state = await mixer.filter('none');
             expect(state.totalShow).toBe(0);
             expect(state.hasFailed).toBe(false);
-            expect(state.hide).toEqual(Array.from(container.children));
+            expect(state.hide).toEqual(Array.from(container.querySelectorAll('.mix')));
             expect(state.activeFilter.selector).toBe('');
         });
 
         it('should accept "all"', async () => {
             const state = await mixer.filter('all');
-            expect(state.show).toEqual(Array.from(container.children));
+            expect(state.show).toEqual(Array.from(container.querySelectorAll('.mix')));
             expect(state.show).toEqual(state.targets);
         });
 
@@ -94,7 +94,7 @@ describe('mixitup.Mixer', () => {
         it('should accept a collection of elements', async () => {
             const collection = [
                 container.firstElementChild!,
-                container.lastElementChild!
+                container.querySelector('.mix:last-of-type')!
             ];
 
             const state = await mixer.filter(collection);
@@ -123,7 +123,7 @@ describe('mixitup.Mixer', () => {
                 action: 'hide'
             };
 
-            const collection = Array.from(container.querySelectorAll(':not(.category-a)'));
+            const collection = Array.from(container.querySelectorAll('.mix:not(.category-a)'));
 
             const state = await mixer.filter(command);
             expect(state.show).toEqual(collection);
@@ -139,7 +139,7 @@ describe('mixitup.Mixer', () => {
                 action: 'hide'
             };
 
-            const collection = Array.from(container.querySelectorAll(':not(.category-a.category-c)'));
+            const collection = Array.from(container.querySelectorAll('.mix:not(.category-a.category-c)'));
 
             const state = await mixer.filter(command);
             expect(state.show).toEqual(collection);

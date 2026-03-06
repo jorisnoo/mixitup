@@ -42,29 +42,29 @@ describe('mixitup.Mixer', () => {
         });
 
         it('should contain a list of targets deeply equaling the contents of the container', () => {
-            expect(state.targets).toEqual(Array.from(container.children));
+            expect(state.targets).toEqual(Array.from(container.querySelectorAll('.mix')));
         });
 
         it('should contain a totalTargets integer, equal to the number of targets in the container', () => {
-            expect(state.totalTargets).toBe(container.children.length);
+            expect(state.totalTargets).toBe(container.querySelectorAll('.mix').length);
         });
 
         it('should contain a list of targets currently shown', () => {
-            expect(state.show).toEqual(Array.from(container.children));
+            expect(state.show).toEqual(Array.from(container.querySelectorAll('.mix')));
             expect(state.show).toEqual(state.targets);
         });
 
         it('should contain a totalShow integer, equal to the number of targets shown', () => {
-            expect(state.totalShow).toBe(container.children.length);
+            expect(state.totalShow).toBe(container.querySelectorAll('.mix').length);
         });
 
         it('should contain a list of targets matching the active selector', () => {
-            expect(state.matching).toEqual(Array.from(container.children));
+            expect(state.matching).toEqual(Array.from(container.querySelectorAll('.mix')));
             expect(state.matching).toEqual(state.targets);
         });
 
         it('should contain a totalMatching integer, equal to the number of targets matching the active selector', () => {
-            expect(state.totalMatching).toBe(container.children.length);
+            expect(state.totalMatching).toBe(container.querySelectorAll('.mix').length);
         });
 
         it('should contain a list of targets currently hidden', () => {

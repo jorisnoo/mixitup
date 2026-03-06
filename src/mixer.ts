@@ -516,7 +516,7 @@ export class Mixer implements MixitupMixer {
         } else if (sibling && position === 'after') {
             element = sibling.nextElementSibling || null;
         } else if (this.targets.length > 0 && typeof idx !== 'undefined') {
-            element = (idx < this.targets.length || !this.targets.length)
+            element = (idx < this.targets.length)
                 ? this.targets[idx].dom.el
                 : this.targets[this.targets.length - 1].dom.el!.nextElementSibling;
         } else if (this.targets.length === 0 && this.dom.parent!.children.length > 0) {

@@ -6,7 +6,7 @@ import dataset from '../mock/dataset.json';
 describe('mixitup.Mixer', () => {
     describe('#sort()', () => {
         const container = dom.getContainer();
-        const originalOrder = Array.from(container.children);
+        const originalOrder = Array.from(container.querySelectorAll('.mix'));
         const mixer = mixitup(container);
 
         const idsByPublishedDate = dataset.slice().sort((a, b) => {

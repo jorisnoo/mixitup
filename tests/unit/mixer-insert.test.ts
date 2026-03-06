@@ -161,7 +161,7 @@ describe('mixitup.Mixer', () => {
 
         it('should allow no elements to be inserted with a warning', async () => {
             const container = dom.getContainer();
-            const totalTargets = container.children.length;
+            const totalTargets = container.querySelectorAll('.mix').length;
             const mixer = mixitup(container);
 
             const state = await mixer.insert();

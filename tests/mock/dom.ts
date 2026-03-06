@@ -14,7 +14,7 @@ export function getContainer(): HTMLElement {
         '<div id="target-4" class="mix category-b" data-ref="mix" data-category="b" data-published="20160407" data-views="62"></div> ' +
         '<div id="target-5" class="mix category-c" data-ref="mix" data-category="c" data-published="20160820" data-views="54"></div> ' +
         '<div id="target-6" class="mix category-a category-c" data-ref="mix" data-category="a c" data-published="20151020" data-views="95"></div>' +
-        '<span class="mixitup-container-gap></span>' +
+        '<span class="mixitup-container-gap"></span>' +
     '</div>');
 }
 
