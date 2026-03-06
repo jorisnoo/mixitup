@@ -1,97 +1,36 @@
-Change Log
-==========
+# Changelog
 
-## 3.3.2
-- Non run-time changes to licensing and distribution model
+All notable changes to this project will be documented in this file.
 
-## 3.3.1
-- Insures dataset uses polyfilled `Array.from` for old IE support.
-- Fixes support for sorting via element collection. This was not correctly implemented before although documented.
-- Fixes the "filter-by-url" demo to ensure that only leading `'.'` characters are stripped off rather than any character.
+## [4.0.0](https://github.com/jorisnoo/mixitup/releases/tag/v4.0.0) (2026-03-06)
 
-## 3.3.0
-- Introduces new internal filter hook `testResultEvaluateHideShown` allowing plugins to manipulate the result of every filter test upon a target. Provides an convenient entry point for non-selector based filtering such as range slider inputs.
-- Adds range slider demo.
+### Features
 
-## 3.2.2
-- Fixes issue where multiple toggle controls are not automatically activated when a compound selector is specified to `load.filter`.
-- Fixes issue where calling `.toggleOff()` and passing a non-existent selector will deactivate all other active toggles.
-- Fixes issue where padding whitespace around a DOM string when calling `.insert()` caused an exception.
-- Adds additional demos for non-standard UI.
+- US-012 - Cleanup & Documentation ([37bc38f](https://github.com/jorisnoo/mixitup/commit/37bc38fb47ccef63148d9a7089e1a00ac653fab5))
+- US-011 - Test Migration ([22996b1](https://github.com/jorisnoo/mixitup/commit/22996b1a14400af2b0233cad9f04a94db4298bc4))
+- US-010 - Factory Function & Entry Point ([10881f3](https://github.com/jorisnoo/mixitup/commit/10881f340d7c768ac02589d76175b0791986eb21))
+- US-009 - Mixer Class Conversion ([f1e7c74](https://github.com/jorisnoo/mixitup/commit/f1e7c7431d28a95cebe3405c7f97479de0157f8a))
+- US-008 - Control Class Conversion ([91fb095](https://github.com/jorisnoo/mixitup/commit/91fb09511922d134cdaba1e94b67d7626c9e5160))
+- US-007 - Target Class Conversion ([3f35696](https://github.com/jorisnoo/mixitup/commit/3f35696b43a2afd45d416ca4245a30e357806f30))
+- US-006 - Internal Data Classes ([7b25160](https://github.com/jorisnoo/mixitup/commit/7b251603829873d37eb0f7486295c7463471d3e3))
+- US-005 - Features Module Simplification ([f085c99](https://github.com/jorisnoo/mixitup/commit/f085c992f2d00f210ad707d70fcc9180e9a3446a))
+- US-004 - Helpers Module Modernization ([db16ec1](https://github.com/jorisnoo/mixitup/commit/db16ec168864d79ccdcb28807a18989262dfd4df))
+- US-003 - Config Default Factories ([913c8a5](https://github.com/jorisnoo/mixitup/commit/913c8a5b8e609e6a1739425db5907292502ff901))
+- US-002 - TypeScript Type Definitions ([64e532f](https://github.com/jorisnoo/mixitup/commit/64e532faf77b8e262d5e4e396fc3719e526d2aef))
+- US-001 - Project Infrastructure Setup ([ad7ad0e](https://github.com/jorisnoo/mixitup/commit/ad7ad0e791a9033f4b31ef23c6fdce71d79fd660))
 
-## 3.2.1
-- Additional edge-case work relating to Dataset API fix in v3.2.0.
-- Addition of `.forceRender()` mixer API method.
-- Removes `.multiMix()` legacy API alias method.
+### Documentation
 
-## 3.2.0
-- Removes support for legacy `$().mixItUp()` jQuery API
-- Fixes issue with Dataset API causing DOM exception when dealing with certain combinations of simultaneous insertion and sorting.
+- remove version numbers and rebrand references in README ([5baa442](https://github.com/jorisnoo/mixitup/commit/5baa442e44f71fa2b733ce3f8b066a60d32bbd93))
+- update README with fork description and TypeScript import example ([6183eb1](https://github.com/jorisnoo/mixitup/commit/6183eb1c2e1d5a50e66fa6e07b156cb62fa71bdc))
+- update progress for US-009 ([4150ed4](https://github.com/jorisnoo/mixitup/commit/4150ed4a36390458061c209acc14cd2ad806fc9d))
+- update progress for US-008 ([cdbe13a](https://github.com/jorisnoo/mixitup/commit/cdbe13a1e821f4b1390c4bb8388778b794722026))
+- update progress for US-007 ([fec7c56](https://github.com/jorisnoo/mixitup/commit/fec7c56a99e7e5da2e483d83a280af1b04fa9192))
 
-## 3.1.12
-- Fixes issue where `state.targets` does not reflect the updated sort order after a sort operation.
-- Addition of `behavior.liveSort` configuration option.
+### Continuous Integration
 
-## 3.1.11
+- improve release workflow with stricter tag pattern, changelog-based notes, and timeout ([b0d9f3e](https://github.com/jorisnoo/mixitup/commit/b0d9f3e6d210380e5e046b659c006ab1ca1abd23))
 
-- Various geometry improvements related to scroll bar issues on desktop Windows and (non-inertial scroll) desktop Mac systems.
-- Addition of `animation.clampWidth` configuration option.
+### Chores
 
-## 3.1.10
-
-- Fixes an issue where the `activeContainerClass` did not persist between non-layout-change operations (e.g. sort, filter).
-
-## 3.1.9
-
-- Fixes an issue relating to `animation.clampHeight` where the height was not correctly applied causing scroll jumping in certain situations.
-
-## 3.1.8
-
-- Adds ability to bind live controls where multiple parents exist. Required for Pagination 3.2.0.
-
-## 3.1.7
-
-- Fixed duplicate hook `beforeCacheDom` in `Target#cacheDom`. Now renamed to `afterCacheDom`.
-
-## 3.1.6
-
-- Added composer.json
-
-## 3.1.5
-
-- Fixed several issues relating to the Dataset API and multimix-like operations (i.e. simultaneous insertion/removal/sorting/dirty-checking)
-
-## 3.1.4
-
-- Added ability to extend static factory methods (such as `mixitup.use`) with hooks.
-- Added ability to return a single DOM element from `render.target` instead of an HTML string
-- Moved target rendering functionality into `Target` class, so that targets can render themselves
-- Force disable controls if dataset API is in use (if `data.uidKey` is set)
-
-## 3.1.3
-
-- Exposed `.toggleOn()` and `.toggleOff()` API methods publicly via the mixer facade, as were accidently missed out previously.
-
-## 3.1.2
-
-- Improved `compareVersions` util function to handle semver notation correctly (e.g. `'^'`, `'~'`, `'-beta'`, etc).
-- Fixed issue with "Filtering by URL" demo that added a `#mix` segment to the URL for filter "all"
-
-## 3.1.1
-
-- Fixed issue where `transitionend` event handlers were not rebound to re-rendered targets during dirtyCheck updates.
-- Fixed issue where dataset operation objects where created on push to queue, resulting in corrupted target data.
-
-## 3.1.0
-
-- Added `selectors.controls` configuration option to allow for further specificity of control querying
-in addition to the mandatory data attributes.
-- Fixed package.json issues.
-
-## 3.0.1
-
-- Fixed issue where `layout.containerClassName` is not reflected in state object after instantiation.
-
-## 3.0.0
-
-- Release
+- add shipmarkrc config, fix test selectors, update repo url and build output ([b6a3e1c](https://github.com/jorisnoo/mixitup/commit/b6a3e1cc341f549069c1bd6e2ccb85da441ecbc6))
