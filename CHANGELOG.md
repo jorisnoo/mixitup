@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [4.0.0](https://github.com/jorisnoo/mixitup/releases/tag/v4.0.0) (2026-03-06)
+## [4.0.0](https://github.com/jorisnoo/mixitup/releases/tag/4.0.0) (2026-03-06)
 
 ### Features
 

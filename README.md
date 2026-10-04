@@ -224,3 +224,7 @@ npm test
 ```
 
 Runs the full test suite via Vitest with jsdom.
+
+## Maintainer releases
+
+See [RELEASING.md](RELEASING.md) for versioning, changelog entries and the release command.
