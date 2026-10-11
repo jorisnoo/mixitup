@@ -102,16 +102,16 @@ export class Target {
         }
     }
 
+    /**
+     * Applies the starting styles of a move. The mixer applies the end styles
+     * (`applyStylesOut`) for all moved targets in a single animation frame.
+     */
     move(moveData: IMoveData): void {
         if (!this.isExcluded) {
             this.mixer.targetsMoved++;
         }
 
         this.applyStylesIn(moveData);
-
-        requestAnimationFrame(() => {
-            this.applyStylesOut(moveData);
-        });
     }
 
     applyTween(posData: IMoveData, multiplier: number): void {
