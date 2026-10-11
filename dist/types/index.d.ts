@@ -251,7 +251,10 @@ export declare class Mixer implements MixitupMixer {
     private evaluateHideShow;
     private sortOperation;
     private compare;
-    private getAttributeValue;
+    /**
+     * Reads a target's sort attribute once so that comparisons don't touch the DOM.
+     */
+    private getSortKey;
     private printSort;
     private parseSortString;
     private parseEffects;
@@ -492,6 +495,10 @@ declare class Target {
     getSortString(attributeName: string): void;
     show(): void;
     hide(): void;
+    /**
+     * Applies the starting styles of a move. The mixer applies the end styles
+     * (`applyStylesOut`) for all moved targets in a single animation frame.
+     */
     move(moveData: IMoveData): void;
     applyTween(posData: IMoveData, multiplier: number): void;
     applyStylesIn(moveData: IMoveData): void;
