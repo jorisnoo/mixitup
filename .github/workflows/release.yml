@@ -19,6 +19,19 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check dist is up to date
+        run: |
+          npm run build
+          if [ -n "$(git status --porcelain dist)" ]; then
+            git status --short dist
+            echo "::error::dist/ in this tag does not match a fresh build. Run 'npm run build', commit, and release a new version."
+            exit 1
+          fi
       - name: Validate and extract release notes
         env:
           RELEASE_VERSION: ${{ github.ref_name }}
