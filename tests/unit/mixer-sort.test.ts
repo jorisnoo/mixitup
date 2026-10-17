@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, afterAll, vi } from 'vitest';
 import mixitup from '../../src/index';
 import * as dom from '../mock/dom';
 import dataset from '../mock/dataset.json';
@@ -166,6 +166,38 @@ describe('mixitup.Mixer', () => {
             // Order has changed
             expect(state.targets).not.toEqual(startOrder);
             expect(state.targets[5].getAttribute('data-published')).toBe(newDate);
+        });
+
+        it('should not rebind target event listeners when sorting by a collection', async () => {
+            const collection = mixer.getState().targets.slice().reverse();
+            const spies = collection.map(el => vi.spyOn(el, 'addEventListener'));
+
+            await mixer.sort(collection, false);
+
+            for (const spy of spies) {
+                expect(spy).not.toHaveBeenCalled();
+                spy.mockRestore();
+            }
+        });
+
+        it('should sort elements missing the sort attribute alongside string values without throwing', async () => {
+            const container = document.createElement('div');
+
+            container.innerHTML =
+                '<div class="mix" data-name="banana"></div> ' +
+                '<div class="mix"></div> ' +
+                '<div class="mix" data-name="apple"></div>';
+
+            document.body.appendChild(container);
+
+            const stringMixer = mixitup(container, { debug: { showWarnings: false } });
+
+            const state = await stringMixer.sort('name:asc', false);
+
+            expect(state.targets.map(el => el.getAttribute('data-name'))).toEqual([null, 'apple', 'banana']);
+
+            stringMixer.destroy();
+            container.remove();
         });
     });
 });

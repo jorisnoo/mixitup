@@ -1,5 +1,6 @@
 import { describe, it, expect, afterAll } from 'vitest';
-import mixitup, { messages, template } from '../../src/index';
+import mixitup, { Mixer, messages, template } from '../../src/index';
+import { Target } from '../../src/target';
 import * as dom from '../mock/dom';
 import JSONDataset from '../mock/dataset.json';
 
@@ -57,6 +58,35 @@ describe('mixitup()', () => {
 });
 
 describe('mixitup.Mixer', () => {
+    describe('#insertDatasetFrag()', () => {
+        it('should insert a large batch in place without exceeding the argument limit', () => {
+            const mixer = new Mixer();
+            const container = dom.getEmptyContainer();
+            const first = new Target();
+            const last = new Target();
+            const nextEl = document.createElement('div');
+            const insertedTargets = Array.from({ length: 150000 }, () => new Target());
+            const firstInserted = insertedTargets[0];
+            const lastInserted = insertedTargets[insertedTargets.length - 1];
+
+            container.append(document.createElement('div'), nextEl);
+            mixer.dom.parent = container;
+            mixer.targets = [first, last];
+
+            const originalTargets = mixer.targets;
+
+            mixer['insertDatasetFrag'](document.createDocumentFragment(), nextEl, insertedTargets);
+
+            expect(mixer.targets).toBe(originalTargets);
+            expect(mixer.targets).toHaveLength(150002);
+            expect(mixer.targets[0]).toBe(first);
+            expect(mixer.targets[1]).toBe(firstInserted);
+            expect(mixer.targets[150000]).toBe(lastInserted);
+            expect(mixer.targets[150001]).toBe(last);
+            expect(insertedTargets).toHaveLength(0);
+        });
+    });
+
     describe('#dataset()', () => {
         const container = dom.getContainer();
         const workingDataset = dataset.slice();

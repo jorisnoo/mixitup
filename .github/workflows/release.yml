@@ -17,6 +17,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check dist is up to date
+        run: |
+          npm run build
+          if [ -n "$(git status --porcelain dist)" ]; then
+            git status --short dist
+            echo "::error::dist/ in this tag does not match a fresh build. Run 'npm run build', commit, and re-tag."
+            exit 1
+          fi
+
       - name: Extract release notes
         id: release_notes
         run: |

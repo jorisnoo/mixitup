@@ -61,6 +61,36 @@ interface MixerDom {
     targets: Element[];
 }
 
+const EFFECTABLES = [
+    'scale', 'translateX', 'translateY', 'translateZ',
+    'rotateX', 'rotateY', 'rotateZ',
+];
+
+const EFFECT_UNITS = ['%', 'px', 'em', 'rem', 'vh', 'vw', 'deg'];
+
+/**
+ * Removes, in place and in a single pass, every item for which the predicate returns true.
+ */
+function removeWhere<T>(array: T[], predicate: (item: T) => boolean): void {
+    let kept = 0;
+
+    for (let i = 0; i < array.length; i++) {
+        const item = array[i];
+
+        if (!predicate(item)) {
+            array[kept++] = item;
+        }
+    }
+
+    array.length = kept;
+}
+
+interface SortKey {
+    isNumeric: boolean;
+    number: number;
+    string: string;
+}
+
 export const instances: Map<string, Mixer> = new Map();
 
 function createStyleData(): StyleData {
@@ -479,8 +509,10 @@ export class Mixer implements MixitupMixer {
         }
 
         if (command.collection) {
+            const domTargets = new Set(this.dom.targets);
+
             for (const el of command.collection) {
-                if (this.dom.targets.indexOf(el) > -1) {
+                if (domTargets.has(el)) {
                     throw new Error((messages.errorInsertPreexistingElement as Function)());
                 }
 
@@ -534,12 +566,13 @@ export class Mixer implements MixitupMixer {
 
     private filterOperation(operation: Operation): void {
         const action = operation.newFilter!.action;
+        const collection = operation.newFilter!.collection ? new Set(operation.newFilter!.collection) : null;
 
         for (const target of (operation.newOrder as Target[])) {
             let testResult = false;
 
-            if (operation.newFilter!.collection) {
-                testResult = operation.newFilter!.collection.indexOf(target.dom.el!) > -1;
+            if (collection) {
+                testResult = collection.has(target.dom.el!);
             } else {
                 if (operation.newFilter!.selector === '') {
                     testResult = false;
@@ -552,23 +585,18 @@ export class Mixer implements MixitupMixer {
         }
 
         if ((operation.toRemove as Target[]).length) {
-            for (let i = 0; i < (operation.show as Target[]).length; i++) {
-                const target = (operation.show as Target[])[i];
+            const toRemove = new Set(operation.toRemove as Target[]);
 
-                if ((operation.toRemove as Target[]).indexOf(target) > -1) {
-                    (operation.show as Target[]).splice(i, 1);
+            removeWhere(operation.show as Target[], (target) => {
+                if (!toRemove.has(target)) return false;
 
-                    const toShowIndex = (operation.toShow as Target[]).indexOf(target);
-                    if (toShowIndex > -1) {
-                        (operation.toShow as Target[]).splice(toShowIndex, 1);
-                    }
+                (operation.toHide as Target[]).push(target);
+                (operation.hide as Target[]).push(target);
 
-                    (operation.toHide as Target[]).push(target);
-                    (operation.hide as Target[]).push(target);
+                return true;
+            });
 
-                    i--;
-                }
-            }
+            removeWhere(operation.toShow as Target[], (target) => toRemove.has(target));
         }
 
         operation.matching = (operation.show as any[]).slice();
@@ -598,15 +626,26 @@ export class Mixer implements MixitupMixer {
 
         if (operation.newSort!.collection) {
             const newOrder: Target[] = [];
+            const domTargets = new Set(this.dom.targets);
+            const targetsByEl = new Map<Element, Target>();
+
+            for (const target of this.targets) {
+                targetsByEl.set(target.dom.el!, target);
+            }
 
             for (const el of operation.newSort!.collection) {
-                if (this.dom.targets.indexOf(el) < 0) {
+                if (!domTargets.has(el)) {
                     throw new Error((messages.errorSortNonExistentElement as Function)());
                 }
 
-                const target = new Target();
-                target.init(el, this);
-                target.isInDom = true;
+                let target = targetsByEl.get(el);
+
+                if (!target) {
+                    target = new Target();
+                    target.init(el, this);
+                    target.isInDom = true;
+                }
+
                 newOrder.push(target);
             }
 
@@ -620,10 +659,23 @@ export class Mixer implements MixitupMixer {
                 (operation.newOrder as Target[]).reverse();
             }
         } else {
-            operation.newOrder = (operation.startOrder as Target[]).slice() as any;
+            const startOrder = operation.startOrder as Target[];
+            const sortKeys = new Map<Target, SortKey[]>();
+
+            for (const target of startOrder) {
+                const keys: SortKey[] = [];
+
+                for (let command: CommandSort | null = operation.newSort!; command; command = command.next) {
+                    keys.push(this.getSortKey(target, command.attribute));
+                }
+
+                sortKeys.set(target, keys);
+            }
+
+            operation.newOrder = startOrder.slice() as any;
 
             (operation.newOrder as Target[]).sort((a: Target, b: Target) => {
-                return this.compare(a, b, operation.newSort!);
+                return this.compare(sortKeys.get(a)!, sortKeys.get(b)!, operation.newSort!);
             });
         }
 
@@ -632,27 +684,25 @@ export class Mixer implements MixitupMixer {
         }
     }
 
-    private compare(a: Target, b: Target, command: CommandSort): number {
+    private compare(keysA: SortKey[], keysB: SortKey[], command: CommandSort, level: number = 0): number {
         const order = command.order;
-        let attrA: any = this.getAttributeValue(a, command.attribute);
-        let attrB: any = this.getAttributeValue(b, command.attribute);
-
-        if (isNaN(attrA * 1) || isNaN(attrB * 1)) {
-            attrA = attrA.toLowerCase();
-            attrB = attrB.toLowerCase();
-        } else {
-            attrA = attrA * 1;
-            attrB = attrB * 1;
-        }
+        const keyA = keysA[level];
+        const keyB = keysB[level];
+        const isNumeric = keyA.isNumeric && keyB.isNumeric;
+        const attrA = isNumeric ? keyA.number : keyA.string;
+        const attrB = isNumeric ? keyB.number : keyB.string;
 
         if (attrA < attrB) return order === 'asc' ? -1 : 1;
         if (attrA > attrB) return order === 'asc' ? 1 : -1;
-        if (attrA === attrB && command.next) return this.compare(a, b, command.next);
+        if (attrA === attrB && command.next) return this.compare(keysA, keysB, command.next, level + 1);
 
         return 0;
     }
 
-    private getAttributeValue(target: Target, attribute: string): string | number {
+    /**
+     * Reads a target's sort attribute once so that comparisons don't touch the DOM.
+     */
+    private getSortKey(target: Target, attribute: string): SortKey {
         const value = target.dom.el!.getAttribute('data-' + attribute);
 
         if (value === null) {
@@ -663,7 +713,14 @@ export class Mixer implements MixitupMixer {
             }
         }
 
-        return value || 0;
+        const raw = value || '0';
+        const number = Number(raw);
+
+        return {
+            isNumeric: !isNaN(number),
+            number,
+            string: raw.toLowerCase(),
+        };
     }
 
     private printSort(isResetting: boolean, operation: Operation): void {
@@ -796,8 +853,6 @@ export class Mixer implements MixitupMixer {
             if (match) val = match[1];
         }
 
-        const units = ['%', 'px', 'em', 'rem', 'vh', 'vw', 'deg'];
-
         switch (effectName) {
             case 'fade':
                 effects.opacity = val ? parseFloat(val) : 0;
@@ -816,7 +871,7 @@ export class Mixer implements MixitupMixer {
                 }
 
                 if (val) {
-                    for (const unit of units) {
+                    for (const unit of EFFECT_UNITS) {
                         if (val.indexOf(unit) > -1) {
                             effectData.unit = unit;
                             break;
@@ -836,9 +891,10 @@ export class Mixer implements MixitupMixer {
         const stateMatching: Element[] = [];
         const stateShow: Element[] = [];
         const stateHide: Element[] = [];
+        const toRemove = new Set(operation.toRemove as Target[]);
 
         for (const target of this.targets) {
-            if (!(operation.toRemove as Target[]).length || (operation.toRemove as Target[]).indexOf(target) < 0) {
+            if (!toRemove.has(target)) {
                 stateTargets.push(target.dom.el!);
             }
         }
@@ -852,7 +908,7 @@ export class Mixer implements MixitupMixer {
         }
 
         for (const target of (operation.hide as Target[])) {
-            if (!(operation.toRemove as Target[]).length || (operation.toRemove as Target[]).indexOf(target) < 0) {
+            if (!toRemove.has(target)) {
                 stateHide.push(target.dom.el!);
             }
         }
@@ -1297,6 +1353,8 @@ export class Mixer implements MixitupMixer {
 
     private moveTargets(operation: Operation): void {
         const checkProgress = this.checkProgress.bind(this);
+        const isContainerVisible = isVisible(this.dom.container!);
+        const moves: [Target, IMoveData][] = [];
         let staggerIndex = -1;
 
         for (let i = 0; i < (operation.show as Target[]).length; i++) {
@@ -1305,7 +1363,7 @@ export class Mixer implements MixitupMixer {
             const moveData = createMoveData();
 
             const statusChange = target.isShown ? 'none' : 'show';
-            const willTransition = this.willTransition(
+            const willTransition = isContainerVisible && this.willTransition(
                 statusChange,
                 operation.hasEffect,
                 posData.posIn,
@@ -1326,6 +1384,7 @@ export class Mixer implements MixitupMixer {
             moveData.callback = willTransition ? checkProgress : null;
 
             target.move(moveData);
+            moves.push([target, moveData]);
         }
 
         for (let i = 0; i < (operation.toHide as Target[]).length; i++) {
@@ -1333,7 +1392,12 @@ export class Mixer implements MixitupMixer {
             const posData = operation.toHidePosData[i] as any;
             const moveData = createMoveData();
 
-            const willTransition = this.willTransition('hide', posData.posIn, posData.posOut);
+            const willTransition = isContainerVisible && this.willTransition(
+                'hide',
+                true,
+                posData.posIn,
+                posData.posOut
+            );
 
             moveData.posIn = posData.posIn;
             moveData.posOut = posData.posOut;
@@ -1343,7 +1407,14 @@ export class Mixer implements MixitupMixer {
             moveData.callback = willTransition ? checkProgress : null;
 
             target.move(moveData);
+            moves.push([target, moveData]);
         }
+
+        requestAnimationFrame(() => {
+            for (const [target, moveData] of moves) {
+                target.applyStylesOut(moveData);
+            }
+        });
 
         if (this.config.animation.animateResizeContainer) {
             this.dom.parent!.style.transition =
@@ -1374,11 +1445,6 @@ export class Mixer implements MixitupMixer {
     }
 
     private hasEffect(): boolean {
-        const EFFECTABLES = [
-            'scale', 'translateX', 'translateY', 'translateZ',
-            'rotateX', 'rotateY', 'rotateZ',
-        ];
-
         if (this.effectsIn!.opacity !== 1) return true;
 
         for (const effectName of EFFECTABLES) {
@@ -1393,41 +1459,22 @@ export class Mixer implements MixitupMixer {
 
     private willTransition(
         statusChange: string,
-        hasEffectOrPosIn: boolean | StyleData,
+        hasEffect: boolean,
         posIn: StyleData,
-        posOut?: StyleData
+        posOut: StyleData
     ): boolean {
-        // Handle two possible call signatures:
-        // willTransition(statusChange, hasEffect, posIn, posOut)
-        // willTransition(statusChange, posIn, posOut) — for toHide
-        let hasEffectVal: boolean;
-        let actualPosIn: StyleData;
-        let actualPosOut: StyleData;
-
-        if (posOut !== undefined) {
-            hasEffectVal = hasEffectOrPosIn as boolean;
-            actualPosIn = posIn;
-            actualPosOut = posOut;
-        } else {
-            hasEffectVal = true;
-            actualPosIn = hasEffectOrPosIn as StyleData;
-            actualPosOut = posIn;
-        }
-
-        if (!isVisible(this.dom.container!)) {
-            return false;
-        } else if (
-            (statusChange !== 'none' && hasEffectVal) ||
-            actualPosIn.x !== actualPosOut.x ||
-            actualPosIn.y !== actualPosOut.y
+        if (
+            (statusChange !== 'none' && hasEffect) ||
+            posIn.x !== posOut.x ||
+            posIn.y !== posOut.y
         ) {
             return true;
         } else if (this.config.animation.animateResizeTargets) {
             return (
-                actualPosIn.width !== actualPosOut.width ||
-                actualPosIn.height !== actualPosOut.height ||
-                actualPosIn.marginRight !== actualPosOut.marginRight ||
-                actualPosIn.marginBottom !== actualPosOut.marginBottom
+                posIn.width !== posOut.width ||
+                posIn.height !== posOut.height ||
+                posIn.marginRight !== posOut.marginRight ||
+                posIn.marginBottom !== posOut.marginBottom
             );
         }
 
@@ -1476,29 +1523,29 @@ export class Mixer implements MixitupMixer {
         }
 
         if ((operation.toRemove as Target[]).length) {
-            for (let i = 0; i < this.targets.length; i++) {
-                const target = this.targets[i];
+            const toRemove = new Set(operation.toRemove as Target[]);
 
-                if ((operation.toRemove as Target[]).indexOf(target) > -1) {
-                    const whitespaceBefore = target.dom.el!.previousSibling;
-                    const whitespaceAfter = target.dom.el!.nextSibling;
+            removeWhere(this.targets, (target) => {
+                if (!toRemove.has(target)) return false;
 
-                    if (
-                        whitespaceBefore && whitespaceBefore.nodeName === '#text' &&
-                        whitespaceAfter && whitespaceAfter.nodeName === '#text'
-                    ) {
-                        removeWhitespace(whitespaceBefore);
-                    }
+                const whitespaceBefore = target.dom.el!.previousSibling;
+                const whitespaceAfter = target.dom.el!.nextSibling;
 
-                    if (!operation.willSort) {
-                        this.dom.parent!.removeChild(target.dom.el!);
-                    }
-
-                    this.targets.splice(i, 1);
-                    target.isInDom = false;
-                    i--;
+                if (
+                    whitespaceBefore && whitespaceBefore.nodeName === '#text' &&
+                    whitespaceAfter && whitespaceAfter.nodeName === '#text'
+                ) {
+                    removeWhitespace(whitespaceBefore);
                 }
-            }
+
+                if (!operation.willSort) {
+                    this.dom.parent!.removeChild(target.dom.el!);
+                }
+
+                target.isInDom = false;
+
+                return true;
+            });
 
             this.origOrder = this.targets;
         }
@@ -1782,8 +1829,10 @@ export class Mixer implements MixitupMixer {
         }
 
         if (cmd.collection.length) {
+            const collection = new Set(cmd.collection);
+
             for (const target of this.targets) {
-                if (cmd.collection.indexOf(target.dom.el!) > -1) {
+                if (collection.has(target.dom.el!)) {
                     cmd.targets.push(target as any);
                 }
             }
@@ -2045,11 +2094,13 @@ export class Mixer implements MixitupMixer {
             this.insertDatasetFrag(frag, nextEl, insertedTargets);
         }
 
+        const shown = new Set(operation.show as Target[]);
+
         for (const data of operation.startDataset!) {
             const id = data[this.config.data.uidKey] as string;
             const target = this.cache[id];
 
-            if ((operation.show as Target[]).indexOf(target) < 0) {
+            if (!shown.has(target)) {
                 (operation.hide as Target[]).push(target);
                 (operation.toHide as Target[]).push(target);
                 (operation.toRemove as Target[]).push(target);
@@ -2070,11 +2121,18 @@ export class Mixer implements MixitupMixer {
 
         this.dom.parent!.insertBefore(frag, nextEl);
 
-        let currentIdx = insertAt;
-        while (targets.length) {
-            this.targets.splice(currentIdx, 0, targets.shift()!);
-            currentIdx++;
+        const insertionIndex = Math.min(insertAt, this.targets.length);
+
+        // Shift the tail once without passing the whole batch as function arguments.
+        for (let i = this.targets.length - 1; i >= insertionIndex; i--) {
+            this.targets[i + targets.length] = this.targets[i];
         }
+
+        for (let i = 0; i < targets.length; i++) {
+            this.targets[insertionIndex + i] = targets[i];
+        }
+
+        targets.length = 0;
     }
 
     private willSortCheck(sortCommandA: CommandSort, sortCommandB: CommandSort): boolean {
@@ -2338,6 +2396,12 @@ export class Mixer implements MixitupMixer {
             target.applyTween(posData, multiplier);
         }
 
+        const toHideIndices = new Map<Target, number>();
+
+        for (let i = (operation.toHide as Target[]).length - 1; i >= 0; i--) {
+            toHideIndices.set((operation.toHide as Target[])[i], i);
+        }
+
         for (let i = 0; i < (operation.hide as Target[]).length; i++) {
             const target = (operation.hide as Target[])[i];
 
@@ -2345,9 +2409,9 @@ export class Mixer implements MixitupMixer {
                 target.hide();
             }
 
-            const toHideIndex = (operation.toHide as Target[]).indexOf(target);
+            const toHideIndex = toHideIndices.get(target);
 
-            if (toHideIndex > -1) {
+            if (typeof toHideIndex !== 'undefined') {
                 const posData = operation.toHidePosData[toHideIndex];
 
                 if (!target.isShown) {
