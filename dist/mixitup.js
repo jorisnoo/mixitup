@@ -252,18 +252,18 @@ function g(o, e, t = !1, i = !1) {
   const s = e;
   try {
     if (Array.isArray(e))
-      for (let r = 0; r < e.length; r++)
-        n.push(String(r));
+      for (let a = 0; a < e.length; a++)
+        n.push(String(a));
     else e && (n = Object.keys(e));
-    for (let r = 0; r < n.length; r++) {
-      const a = n[r];
-      !t || typeof s[a] != "object" || m(s[a]) ? o[a] = s[a] : Array.isArray(s[a]) ? (o[a] || (o[a] = []), g(o[a], s[a], t, i)) : (o[a] || (o[a] = {}), g(o[a], s[a], t, i));
+    for (let a = 0; a < n.length; a++) {
+      const r = n[a];
+      !t || typeof s[r] != "object" || m(s[r]) ? o[r] = s[r] : Array.isArray(s[r]) ? (o[r] || (o[r] = []), g(o[r], s[r], t, i)) : (o[r] || (o[r] = {}), g(o[r], s[r], t, i));
     }
-  } catch (r) {
+  } catch (a) {
     if (i)
-      at(r, o);
+      at(a, o);
     else
-      throw r;
+      throw a;
   }
   return o;
 }
@@ -273,16 +273,16 @@ function at(o, e) {
     const i = t.exec(o.message);
     if (i) {
       const n = i[1];
-      let s = "", r = -1;
+      let s = "", a = -1;
       for (const l in e) {
         let h = 0;
         for (; h < n.length && n.charAt(h) === l.charAt(h); )
           h++;
-        h > r && (r = h, s = l);
+        h > a && (a = h, s = l);
       }
-      let a = "";
-      r > 1 && (a = `Did you mean "${s}"?`);
-      const c = `[MixItUp] Invalid config property "${n}". ${a}`.trim();
+      let r = "";
+      a > 1 && (r = `Did you mean "${s}"?`);
+      const c = `[MixItUp] Invalid config property "${n}". ${r}`.trim();
       throw new TypeError(c);
     }
   }
@@ -296,8 +296,8 @@ function rt(o) {
   return (n) => {
     let s = o;
     n = n || {};
-    for (const r in t)
-      s = s.replace(t[r], typeof n[r] < "u" ? n[r] : "");
+    for (const a in t)
+      s = s.replace(t[a], typeof n[a] < "u" ? n[a] : "");
     return s;
   };
 }
@@ -494,26 +494,26 @@ class b {
       y: i.y
     };
     t === 0 ? this.hide() : this.isShown || this.show();
-    for (const r of R.TWEENABLE) {
-      const a = e.tweenData[r];
-      if (r === "x") {
-        if (!a) continue;
-        s.x = i.x + a * t;
-      } else if (r === "y") {
-        if (!a) continue;
-        s.y = i.y + a * t;
-      } else if (a && typeof a == "object" && "value" in a) {
-        if (!a.value) continue;
-        const c = i[r];
-        s[r] = {
-          value: c.value + a.value * t,
-          unit: a.unit
+    for (const a of R.TWEENABLE) {
+      const r = e.tweenData[a];
+      if (a === "x") {
+        if (!r) continue;
+        s.x = i.x + r * t;
+      } else if (a === "y") {
+        if (!r) continue;
+        s.y = i.y + r * t;
+      } else if (r && typeof r == "object" && "value" in r) {
+        if (!r.value) continue;
+        const c = i[a];
+        s[a] = {
+          value: c.value + r.value * t,
+          unit: r.unit
         }, n.push(
-          r + "(" + s[r].value + a.unit + ")"
+          a + "(" + s[a].value + r.unit + ")"
         );
       } else {
-        if (!a) continue;
-        s[r] = i[r] + a * t, this.dom.el.style[r] = s[r];
+        if (!r) continue;
+        s[a] = i[a] + r * t, this.dom.el.style[a] = s[a];
       }
     }
     (s.x || s.y) && n.unshift("translate(" + s.x + "px, " + s.y + "px)"), n.length && (this.dom.el.style.transform = n.join(" "));
@@ -526,7 +526,7 @@ class b {
   applyStylesOut(e) {
     const t = [];
     let i = [];
-    const n = this.mixer.config.animation.animateResizeTargets, s = typeof this.mixer.effectsIn.opacity < "u", r = this.dom.el;
+    const n = this.mixer.config.animation.animateResizeTargets, s = typeof this.mixer.effectsIn.opacity < "u", a = this.dom.el;
     if (t.push(this.writeTransitionRule(
       R.transformRule,
       e.staggerIndex
@@ -551,15 +551,15 @@ class b {
       return;
     }
     this.operation = e.operation, this.callback = e.callback, this.isExcluded || this.mixer.targetsBound++, this.isBound = !0, this.applyTransition(t);
-    const a = e.posOut;
-    switch (n && a.width > 0 && a.height > 0 && (r.style.width = a.width + "px", r.style.height = a.height + "px", r.style.marginRight = a.marginRight + "px", r.style.marginBottom = a.marginBottom + "px"), !this.mixer.config.animation.nudge && e.statusChange === "hide" && i.push("translate(" + a.x + "px, " + a.y + "px)"), e.statusChange) {
+    const r = e.posOut;
+    switch (n && r.width > 0 && r.height > 0 && (a.style.width = r.width + "px", a.style.height = r.height + "px", a.style.marginRight = r.marginRight + "px", a.style.marginBottom = r.marginBottom + "px"), !this.mixer.config.animation.nudge && e.statusChange === "hide" && i.push("translate(" + r.x + "px, " + r.y + "px)"), e.statusChange) {
       case "hide":
-        s && (r.style.opacity = String(this.mixer.effectsOut.opacity)), i = i.concat(this.mixer.transformOut);
+        s && (a.style.opacity = String(this.mixer.effectsOut.opacity)), i = i.concat(this.mixer.transformOut);
         break;
       case "show":
-        s && (r.style.opacity = "1");
+        s && (a.style.opacity = "1");
     }
-    (this.mixer.config.animation.nudge || !this.mixer.config.animation.nudge && e.statusChange !== "hide") && i.push("translate(" + a.x + "px, " + a.y + "px)"), r.style.transform = i.join(" ");
+    (this.mixer.config.animation.nudge || !this.mixer.config.animation.nudge && e.statusChange !== "hide") && i.push("translate(" + r.x + "px, " + r.y + "px)"), a.style.transform = i.join(" ");
   }
   writeTransitionRule(e, t, i) {
     const n = this.getDelay(t);
@@ -690,9 +690,9 @@ class wt {
     let t = null, i = !1, n;
     const s = {};
     this.pending = 0;
-    const r = this.bound[0];
+    const a = this.bound[0];
     if (this.selector ? t = e.target.closest(
-      r.config.selectors.control + this.selector
+      a.config.selectors.control + this.selector
     ) : t = this.el, !t)
       return;
     switch (this.type) {
@@ -709,14 +709,14 @@ class wt {
         s.filter = this.filter || t.getAttribute("data-toggle"), this.status === "live" ? i = t.classList.contains(this.classNames.active) : i = this.status === "active";
         break;
     }
-    const a = [];
+    const r = [];
     for (let c = 0; c < this.bound.length; c++) {
       const l = {};
-      g(l, s), a.push(l);
+      g(l, s), r.push(l);
     }
     this.pending = this.bound.length;
     for (let c = 0; c < this.bound.length; c++) {
-      const l = this.bound[c], h = a[c];
+      const l = this.bound[c], h = r[c];
       h && (l.lastClicked || (l.lastClicked = t), y("mixClick", l.dom.container, {
         state: l.state,
         instance: l,
@@ -746,22 +746,22 @@ class wt {
     if (!this.el) return;
     const i = this.el.querySelectorAll(this.selector);
     for (let n = 0; n < i.length; n++) {
-      const s = i[n], r = {};
+      const s = i[n], a = {};
       switch (this.type) {
         case "filter":
-          r.filter = s.getAttribute("data-filter");
+          a.filter = s.getAttribute("data-filter");
           break;
         case "sort":
-          r.sort = s.getAttribute("data-sort");
+          a.sort = s.getAttribute("data-sort");
           break;
         case "multimix":
-          r.filter = s.getAttribute("data-filter"), r.sort = s.getAttribute("data-sort");
+          a.filter = s.getAttribute("data-filter"), a.sort = s.getAttribute("data-sort");
           break;
         case "toggle":
-          r.filter = s.getAttribute("data-toggle");
+          a.filter = s.getAttribute("data-toggle");
           break;
       }
-      this.parseStatusChange(s, e, r, t);
+      this.parseStatusChange(s, e, a, t);
     }
   }
   parseStatusChange(e, t, i, n) {
@@ -778,8 +778,8 @@ class wt {
         break;
       case "toggle":
         n.length < 1 && this.renderStatus(e, "inactive"), t.filter === i.filter && this.renderStatus(e, "active");
-        for (let r = 0; r < n.length; r++) {
-          if (n[r] === i.filter) {
+        for (let a = 0; a < n.length; a++) {
+          if (n[a] === i.filter) {
             this.renderStatus(e, "active");
             break;
           }
@@ -952,8 +952,8 @@ class vt {
           this.config.selectors.control + t.selector
         );
         for (let n = 0; n < i.length; n++) {
-          const s = i[n], r = this.getControl(s, t.type, "");
-          r && this.controls.push(r);
+          const s = i[n], a = this.getControl(s, t.type, "");
+          a && this.controls.push(a);
         }
       }
   }
@@ -1007,13 +1007,13 @@ class vt {
     const i = this.getNextSibling(e.index, e.sibling, e.position), n = this.dom.document.createDocumentFragment();
     let s;
     if (i ? s = ot(i, this.config.selectors.target) : s = this.targets.length, e.collection) {
-      const r = new Set(this.dom.targets);
-      for (const a of e.collection) {
-        if (r.has(a))
+      const a = new Set(this.dom.targets);
+      for (const r of e.collection) {
+        if (a.has(r))
           throw new Error(d.errorInsertPreexistingElement());
-        if (a.style.display = "none", n.appendChild(a), n.appendChild(this.dom.document.createTextNode(" ")), !m(a, this.dom.document) || !a.matches(this.config.selectors.target)) continue;
+        if (r.style.display = "none", n.appendChild(r), n.appendChild(this.dom.document.createTextNode(" ")), !m(r, this.dom.document) || !r.matches(this.config.selectors.target)) continue;
         const c = new b();
-        c.init(a, this), c.isInDom = !0, this.targets.splice(s, 0, c), s++;
+        c.init(r, this), c.isInDom = !0, this.targets.splice(s, 0, c), s++;
       }
       this.dom.parent.insertBefore(n, i);
     }
@@ -1046,8 +1046,8 @@ class vt {
       for (const s of e.newSort.collection) {
         if (!i.has(s))
           throw new Error(d.errorSortNonExistentElement());
-        let r = n.get(s);
-        r || (r = new b(), r.init(s, this), r.isInDom = !0), t.push(r);
+        let a = n.get(s);
+        a || (a = new b(), a.init(s, this), a.isInDom = !0), t.push(a);
       }
       e.newOrder = t;
     } else if (e.newSort.order === "random")
@@ -1058,8 +1058,8 @@ class vt {
       const t = e.startOrder, i = /* @__PURE__ */ new Map();
       for (const n of t) {
         const s = [];
-        for (let r = e.newSort; r; r = r.next)
-          s.push(this.getSortKey(n, r.attribute));
+        for (let a = e.newSort; a; a = a.next)
+          s.push(this.getSortKey(n, a.attribute));
         i.set(n, s);
       }
       e.newOrder = t.slice(), e.newOrder.sort((n, s) => this.compare(i.get(n), i.get(s), e.newSort));
@@ -1067,7 +1067,7 @@ class vt {
     A(e.newOrder, e.startOrder) && (e.willSort = !1);
   }
   compare(e, t, i, n = 0) {
-    const s = i.order, r = e[n], a = t[n], c = r.isNumeric && a.isNumeric, l = c ? r.number : r.string, h = c ? a.number : a.string;
+    const s = i.order, a = e[n], r = t[n], c = a.isNumeric && r.isNumeric, l = c ? a.number : a.string, h = c ? r.number : r.string;
     return l < h ? s === "asc" ? -1 : 1 : l > h ? s === "asc" ? 1 : -1 : l === h && i.next ? this.compare(e, t, i.next, n + 1) : 0;
   }
   /**
@@ -1086,25 +1086,25 @@ class vt {
     };
   }
   printSort(e, t) {
-    const i = e ? t.newOrder : t.startOrder, n = e ? t.startOrder : t.newOrder, s = i.length ? i[i.length - 1].dom.el.nextElementSibling : null, r = window.document.createDocumentFragment();
+    const i = e ? t.newOrder : t.startOrder, n = e ? t.startOrder : t.newOrder, s = i.length ? i[i.length - 1].dom.el.nextElementSibling : null, a = window.document.createDocumentFragment();
     for (const c of i) {
       const l = c.dom.el;
       l.style.position !== "absolute" && (C(l.previousSibling), l.parentElement.removeChild(l));
     }
-    const a = s ? s.previousSibling : this.dom.parent.lastChild;
-    a && a.nodeName === "#text" && C(a);
+    const r = s ? s.previousSibling : this.dom.parent.lastChild;
+    r && r.nodeName === "#text" && C(r);
     for (const c of n) {
       const l = c.dom.el;
-      m(r.lastChild) && r.appendChild(window.document.createTextNode(" ")), r.appendChild(l);
+      m(a.lastChild) && a.appendChild(window.document.createTextNode(" ")), a.appendChild(l);
     }
-    this.dom.parent.firstChild && this.dom.parent.firstChild !== s && r.insertBefore(window.document.createTextNode(" "), r.childNodes[0]), s ? (r.appendChild(window.document.createTextNode(" ")), this.dom.parent.insertBefore(r, s)) : this.dom.parent.appendChild(r);
+    this.dom.parent.firstChild && this.dom.parent.firstChild !== s && a.insertBefore(window.document.createTextNode(" "), a.childNodes[0]), s ? (a.appendChild(window.document.createTextNode(" ")), this.dom.parent.insertBefore(a, s)) : this.dom.parent.appendChild(a);
   }
   parseSortString(e, t) {
     const i = e.split(" ");
     let n = t;
     for (let s = 0; s < i.length; s++) {
-      const r = i[s].split(":");
-      switch (n.sortString = i[s], n.attribute = ct(r[0]), n.order = r[1] || "asc", n.attribute) {
+      const a = i[s].split(":");
+      switch (n.sortString = i[s], n.attribute = ct(a[0]), n.order = a[1] || "asc", n.attribute) {
         case "default":
           n.attribute = "";
           break;
@@ -1125,17 +1125,17 @@ class vt {
     this.parseEffect("stagger", e, this.effectsIn, this.transformIn), this.parseEffect("stagger", t, this.effectsOut, this.transformOut, !0);
   }
   parseEffect(e, t, i, n, s = !1) {
-    const r = /\(([^)]+)\)/;
+    const a = /\(([^)]+)\)/;
     if (typeof t != "string")
       throw new TypeError(d.errorConfigInvalidAnimationEffects());
     if (t.indexOf(e) < 0) {
       e === "stagger" && (this.staggerDuration = 0);
       return;
     }
-    const a = t.indexOf(e + "(");
+    const r = t.indexOf(e + "(");
     let c = "";
-    if (a > -1) {
-      const l = t.substring(a), h = r.exec(l);
+    if (r > -1) {
+      const l = t.substring(r), h = a.exec(l);
       h && (c = h[1]);
     }
     switch (e) {
@@ -1160,15 +1160,15 @@ class vt {
     }
   }
   buildState(e) {
-    const t = [], i = [], n = [], s = [], r = new Set(e.toRemove);
-    for (const a of this.targets)
-      r.has(a) || t.push(a.dom.el);
-    for (const a of e.matching)
-      i.push(a.dom.el);
-    for (const a of e.show)
-      n.push(a.dom.el);
-    for (const a of e.hide)
-      r.has(a) || s.push(a.dom.el);
+    const t = [], i = [], n = [], s = [], a = new Set(e.toRemove);
+    for (const r of this.targets)
+      a.has(r) || t.push(r.dom.el);
+    for (const r of e.matching)
+      i.push(r.dom.el);
+    for (const r of e.show)
+      n.push(r.dom.el);
+    for (const r of e.hide)
+      a.has(r) || s.push(r.dom.el);
     return {
       id: this.id,
       container: this.dom.container,
@@ -1240,12 +1240,12 @@ class vt {
     const t = window.getComputedStyle(this.dom.parent), i = this.dom.parent.getBoundingClientRect(), n = t.boxSizing;
     this.incPadding = n === "border-box";
     for (let s = 0; s < e.show.length; s++) {
-      const a = e.show[s].getPosData();
-      e.showPosData[s] = { startPosData: a };
+      const r = e.show[s].getPosData();
+      e.showPosData[s] = { startPosData: r };
     }
     for (let s = 0; s < e.toHide.length; s++) {
-      const a = e.toHide[s].getPosData();
-      e.toHidePosData[s] = { startPosData: a };
+      const r = e.toHide[s].getPosData();
+      e.toHidePosData[s] = { startPosData: r };
     }
     e.startX = i.left, e.startY = i.top, e.startHeight = this.incPadding ? i.height : i.height - parseFloat(t.paddingTop) - parseFloat(t.paddingBottom) - parseFloat(t.borderTop) - parseFloat(t.borderBottom), e.startWidth = this.incPadding ? i.width : i.width - parseFloat(t.paddingLeft) - parseFloat(t.paddingRight) - parseFloat(t.borderLeft) - parseFloat(t.borderRight);
   }
@@ -1272,12 +1272,12 @@ class vt {
   }
   getFinalMixData(e) {
     for (let s = 0; s < e.show.length; s++) {
-      const r = e.show[s];
-      e.showPosData[s].finalPosData = r.getPosData();
+      const a = e.show[s];
+      e.showPosData[s].finalPosData = a.getPosData();
     }
     for (let s = 0; s < e.toHide.length; s++) {
-      const r = e.toHide[s];
-      e.toHidePosData[s].finalPosData = r.getPosData();
+      const a = e.toHide[s];
+      e.toHidePosData[s].finalPosData = a.getPosData();
     }
     (this.config.animation.clampHeight || this.config.animation.clampWidth) && (this.dom.parent.style.height = this.dom.parent.style.width = this.dom.parent.style.overflow = "");
     let t = null;
@@ -1298,56 +1298,56 @@ class vt {
       const n = e.show[i], s = e.showPosData[i];
       if (s.posIn = u(), s.posOut = u(), s.tweenData = u(), n.isShown ? (s.posIn.x = s.startPosData.x - s.interPosData.x, s.posIn.y = s.startPosData.y - s.interPosData.y) : s.posIn.x = s.posIn.y = 0, s.posOut.x = s.finalPosData.x - s.interPosData.x, s.posOut.y = s.finalPosData.y - s.interPosData.y, s.posIn.opacity = n.isShown ? 1 : this.effectsIn.opacity, s.posOut.opacity = 1, s.tweenData.opacity = s.posOut.opacity - s.posIn.opacity, !n.isShown && !this.config.animation.nudge && (s.posIn.x = s.posOut.x, s.posIn.y = s.posOut.y), s.tweenData.x = s.posOut.x - s.posIn.x, s.tweenData.y = s.posOut.y - s.posIn.y, this.config.animation.animateResizeTargets) {
         s.posIn.width = s.startPosData.width, s.posIn.height = s.startPosData.height;
-        let r = (s.startPosData.width || s.finalPosData.width) - s.interPosData.width;
-        s.posIn.marginRight = s.startPosData.marginRight - r;
-        let a = (s.startPosData.height || s.finalPosData.height) - s.interPosData.height;
-        s.posIn.marginBottom = s.startPosData.marginBottom - a, s.posOut.width = s.finalPosData.width, s.posOut.height = s.finalPosData.height, r = (s.finalPosData.width || s.startPosData.width) - s.interPosData.width, s.posOut.marginRight = s.finalPosData.marginRight - r, a = (s.finalPosData.height || s.startPosData.height) - s.interPosData.height, s.posOut.marginBottom = s.finalPosData.marginBottom - a, s.tweenData.width = s.posOut.width - s.posIn.width, s.tweenData.height = s.posOut.height - s.posIn.height, s.tweenData.marginRight = s.posOut.marginRight - s.posIn.marginRight, s.tweenData.marginBottom = s.posOut.marginBottom - s.posIn.marginBottom;
+        let a = (s.startPosData.width || s.finalPosData.width) - s.interPosData.width;
+        s.posIn.marginRight = s.startPosData.marginRight - a;
+        let r = (s.startPosData.height || s.finalPosData.height) - s.interPosData.height;
+        s.posIn.marginBottom = s.startPosData.marginBottom - r, s.posOut.width = s.finalPosData.width, s.posOut.height = s.finalPosData.height, a = (s.finalPosData.width || s.startPosData.width) - s.interPosData.width, s.posOut.marginRight = s.finalPosData.marginRight - a, r = (s.finalPosData.height || s.startPosData.height) - s.interPosData.height, s.posOut.marginBottom = s.finalPosData.marginBottom - r, s.tweenData.width = s.posOut.width - s.posIn.width, s.tweenData.height = s.posOut.height - s.posIn.height, s.tweenData.marginRight = s.posOut.marginRight - s.posIn.marginRight, s.tweenData.marginBottom = s.posOut.marginBottom - s.posIn.marginBottom;
       }
-      for (const r of t) {
-        const a = this.effectsIn[r];
-        typeof a != "object" || !("value" in a) || !a.value || (s.posIn[r].value = a.value, s.posOut[r].value = 0, s.tweenData[r].value = s.posOut[r].value - s.posIn[r].value, s.posIn[r].unit = s.posOut[r].unit = s.tweenData[r].unit = a.unit);
+      for (const a of t) {
+        const r = this.effectsIn[a];
+        typeof r != "object" || !("value" in r) || !r.value || (s.posIn[a].value = r.value, s.posOut[a].value = 0, s.tweenData[a].value = s.posOut[a].value - s.posIn[a].value, s.posIn[a].unit = s.posOut[a].unit = s.tweenData[a].unit = r.unit);
       }
     }
     for (let i = 0; i < e.toHide.length; i++) {
       const n = e.toHide[i], s = e.toHidePosData[i];
       if (s.posIn = u(), s.posOut = u(), s.tweenData = u(), s.posIn.x = n.isShown ? s.startPosData.x - s.interPosData.x : 0, s.posIn.y = n.isShown ? s.startPosData.y - s.interPosData.y : 0, s.posOut.x = this.config.animation.nudge ? 0 : s.posIn.x, s.posOut.y = this.config.animation.nudge ? 0 : s.posIn.y, s.tweenData.x = s.posOut.x - s.posIn.x, s.tweenData.y = s.posOut.y - s.posIn.y, this.config.animation.animateResizeTargets) {
         s.posIn.width = s.startPosData.width, s.posIn.height = s.startPosData.height;
-        const r = s.startPosData.width - s.interPosData.width;
-        s.posIn.marginRight = s.startPosData.marginRight - r;
-        const a = s.startPosData.height - s.interPosData.height;
-        s.posIn.marginBottom = s.startPosData.marginBottom - a;
+        const a = s.startPosData.width - s.interPosData.width;
+        s.posIn.marginRight = s.startPosData.marginRight - a;
+        const r = s.startPosData.height - s.interPosData.height;
+        s.posIn.marginBottom = s.startPosData.marginBottom - r;
       }
       s.posIn.opacity = 1, s.posOut.opacity = this.effectsOut.opacity, s.tweenData.opacity = s.posOut.opacity - s.posIn.opacity;
-      for (const r of t) {
-        const a = this.effectsOut[r];
-        typeof a != "object" || !("value" in a) || !a.value || (s.posIn[r].value = 0, s.posOut[r].value = a.value, s.tweenData[r].value = s.posOut[r].value - s.posIn[r].value, s.posIn[r].unit = s.posOut[r].unit = s.tweenData[r].unit = a.unit);
+      for (const a of t) {
+        const r = this.effectsOut[a];
+        typeof r != "object" || !("value" in r) || !r.value || (s.posIn[a].value = 0, s.posOut[a].value = r.value, s.tweenData[a].value = s.posOut[a].value - s.posIn[a].value, s.posIn[a].unit = s.posOut[a].unit = s.tweenData[a].unit = r.unit);
       }
     }
   }
   moveTargets(e) {
     const t = this.checkProgress.bind(this), i = M(this.dom.container), n = [];
     let s = -1;
-    for (let r = 0; r < e.show.length; r++) {
-      const a = e.show[r], c = e.showPosData[r], l = L(), h = a.isShown ? "none" : "show", f = i && this.willTransition(
+    for (let a = 0; a < e.show.length; a++) {
+      const r = e.show[a], c = e.showPosData[a], l = L(), h = r.isShown ? "none" : "show", f = i && this.willTransition(
         h,
         e.hasEffect,
         c.posIn,
         c.posOut
       );
-      f && s++, a.show(), l.posIn = c.posIn, l.posOut = c.posOut, l.statusChange = h, l.staggerIndex = s, l.operation = e, l.callback = f ? t : null, a.move(l), n.push([a, l]);
+      f && s++, r.show(), l.posIn = c.posIn, l.posOut = c.posOut, l.statusChange = h, l.staggerIndex = s, l.operation = e, l.callback = f ? t : null, r.move(l), n.push([r, l]);
     }
-    for (let r = 0; r < e.toHide.length; r++) {
-      const a = e.toHide[r], c = e.toHidePosData[r], l = L(), h = i && this.willTransition(
+    for (let a = 0; a < e.toHide.length; a++) {
+      const r = e.toHide[a], c = e.toHidePosData[a], l = L(), h = i && this.willTransition(
         "hide",
         !0,
         c.posIn,
         c.posOut
       );
-      l.posIn = c.posIn, l.posOut = c.posOut, l.statusChange = "hide", l.staggerIndex = r, l.operation = e, l.callback = h ? t : null, a.move(l), n.push([a, l]);
+      l.posIn = c.posIn, l.posOut = c.posOut, l.statusChange = "hide", l.staggerIndex = a, l.operation = e, l.callback = h ? t : null, r.move(l), n.push([r, l]);
     }
     requestAnimationFrame(() => {
-      for (const [r, a] of n)
-        r.applyStylesOut(a);
+      for (const [a, r] of n)
+        a.applyStylesOut(r);
     }), this.config.animation.animateResizeContainer && (this.dom.parent.style.transition = "height " + this.config.animation.duration + "ms ease, width " + this.config.animation.duration + "ms ease ", requestAnimationFrame(() => {
       e.startHeight !== e.newHeight && e.viewportDeltaY !== e.startHeight - e.newHeight && (this.dom.parent.style.height = e.newHeight + "px"), e.startWidth !== e.newWidth && e.viewportDeltaX !== e.startWidth - e.newWidth && (this.dom.parent.style.width = e.newWidth + "px");
     })), e.willChangeLayout && (this.config.layout.containerClassName && this.dom.container.classList.remove(this.config.layout.containerClassName), e.newContainerClassName && this.dom.container.classList.add(e.newContainerClassName));
@@ -1540,7 +1540,7 @@ class vt {
   }
   diffDatasets(e) {
     const t = [], i = [], n = [], s = {};
-    let r = null, a = null;
+    let a = null, r = null;
     for (const l of e.newDataset) {
       const h = l[this.config.data.uidKey];
       if (typeof h > "u" || h.toString().length < 1)
@@ -1561,9 +1561,9 @@ class vt {
         }
       } else
         f = new b(), f.init(null, this, l), f.hide();
-      f.isInDom ? (a = f.dom.el.nextElementSibling, i.push(h), r && (r.lastElementChild && r.appendChild(this.dom.document.createTextNode(" ")), this.insertDatasetFrag(r, f.dom.el, n), r = null)) : (r || (r = this.dom.document.createDocumentFragment()), r.lastElementChild && r.appendChild(this.dom.document.createTextNode(" ")), r.appendChild(f.dom.el), f.isInDom = !0, f.unbindEvents(), f.bindEvents(), f.hide(), e.toShow.push(f), n.push(f)), e.show.push(f);
+      f.isInDom ? (r = f.dom.el.nextElementSibling, i.push(h), a && (a.lastElementChild && a.appendChild(this.dom.document.createTextNode(" ")), this.insertDatasetFrag(a, f.dom.el, n), a = null)) : (a || (a = this.dom.document.createDocumentFragment()), a.lastElementChild && a.appendChild(this.dom.document.createTextNode(" ")), a.appendChild(f.dom.el), f.isInDom = !0, f.unbindEvents(), f.bindEvents(), f.hide(), e.toShow.push(f), n.push(f)), e.show.push(f);
     }
-    r && (a = a || this.config.layout.siblingAfter, a && r.appendChild(this.dom.document.createTextNode(" ")), this.insertDatasetFrag(r, a, n));
+    a && (r = r || this.config.layout.siblingAfter, r && a.appendChild(this.dom.document.createTextNode(" ")), this.insertDatasetFrag(a, r, n));
     const c = new Set(e.show);
     for (const l of e.startDataset) {
       const h = l[this.config.data.uidKey], f = this.cache[h];
@@ -1573,7 +1573,13 @@ class vt {
   }
   insertDatasetFrag(e, t, i) {
     const n = t ? Array.from(this.dom.parent.children).indexOf(t) : this.targets.length;
-    this.dom.parent.insertBefore(e, t), this.targets.splice(n, 0, ...i), i.length = 0;
+    this.dom.parent.insertBefore(e, t);
+    const s = Math.min(n, this.targets.length);
+    for (let a = this.targets.length - 1; a >= s; a--)
+      this.targets[a + i.length] = this.targets[a];
+    for (let a = 0; a < i.length; a++)
+      this.targets[s + a] = i[a];
+    i.length = 0;
   }
   willSortCheck(e, t) {
     return this.config.behavior.liveSort || e.order === "random" || e.attribute !== t.attribute || e.order !== t.order || e.collection !== t.collection || e.next === null && t.next || e.next && t.next === null ? !0 : e.next && t.next ? this.willSortCheck(e.next, t.next) : !1;
@@ -1648,14 +1654,14 @@ class vt {
     }
   }
   getOperation(e) {
-    const t = e.sort, i = e.filter, n = e.changeLayout, s = e.remove, r = e.insert, a = D();
-    return a.id = E(), a.command = e, a.startState = this.state, a.triggerElement = this.lastClicked, this.isBusy ? (this.config.debug.showWarnings && console.warn(d.warningGetOperationInstanceBusy()), null) : (r && this.insertTargets(r, a), s && (a.toRemove = s.targets), a.startSort = a.newSort = this.state.activeSort, a.startOrder = a.newOrder = this.targets, t && (a.startSort = this.state.activeSort, a.newSort = t, a.willSort = this.willSortCheck(t, this.state.activeSort), a.willSort && this.sortOperation(a)), a.startFilter = this.state.activeFilter, i ? a.newFilter = i : a.newFilter = { ...a.startFilter }, a.newFilter.selector === "all" ? a.newFilter.selector = this.config.selectors.target : a.newFilter.selector === "none" && (a.newFilter.selector = ""), this.filterOperation(a), a.startContainerClassName = this.state.activeContainerClassName, n ? (a.newContainerClassName = n.containerClassName, a.newContainerClassName !== a.startContainerClassName && (a.willChangeLayout = !0)) : a.newContainerClassName = a.startContainerClassName, this.config.animation.enable && (this.getStartMixData(a), this.setInter(a), a.docState = F(this.dom.document), this.getInterMixData(a), this.setFinal(a), this.getFinalMixData(a), this.parseEffects(), a.hasEffect = this.hasEffect(), this.getTweenData(a)), a.willSort && (this.targets = a.newOrder), a.newState = this.buildState(a), a);
+    const t = e.sort, i = e.filter, n = e.changeLayout, s = e.remove, a = e.insert, r = D();
+    return r.id = E(), r.command = e, r.startState = this.state, r.triggerElement = this.lastClicked, this.isBusy ? (this.config.debug.showWarnings && console.warn(d.warningGetOperationInstanceBusy()), null) : (a && this.insertTargets(a, r), s && (r.toRemove = s.targets), r.startSort = r.newSort = this.state.activeSort, r.startOrder = r.newOrder = this.targets, t && (r.startSort = this.state.activeSort, r.newSort = t, r.willSort = this.willSortCheck(t, this.state.activeSort), r.willSort && this.sortOperation(r)), r.startFilter = this.state.activeFilter, i ? r.newFilter = i : r.newFilter = { ...r.startFilter }, r.newFilter.selector === "all" ? r.newFilter.selector = this.config.selectors.target : r.newFilter.selector === "none" && (r.newFilter.selector = ""), this.filterOperation(r), r.startContainerClassName = this.state.activeContainerClassName, n ? (r.newContainerClassName = n.containerClassName, r.newContainerClassName !== r.startContainerClassName && (r.willChangeLayout = !0)) : r.newContainerClassName = r.startContainerClassName, this.config.animation.enable && (this.getStartMixData(r), this.setInter(r), r.docState = F(this.dom.document), this.getInterMixData(r), this.setFinal(r), this.getFinalMixData(r), this.parseEffects(), r.hasEffect = this.hasEffect(), this.getTweenData(r)), r.willSort && (this.targets = r.newOrder), r.newState = this.buildState(r), r);
   }
   tween(e, t) {
     t = Math.min(t, 1), t = Math.max(t, 0);
     for (let n = 0; n < e.show.length; n++) {
-      const s = e.show[n], r = e.showPosData[n];
-      s.applyTween(r, t);
+      const s = e.show[n], a = e.showPosData[n];
+      s.applyTween(a, t);
     }
     const i = /* @__PURE__ */ new Map();
     for (let n = e.toHide.length - 1; n >= 0; n--)
@@ -1663,10 +1669,10 @@ class vt {
     for (let n = 0; n < e.hide.length; n++) {
       const s = e.hide[n];
       s.isShown && s.hide();
-      const r = i.get(s);
-      if (typeof r < "u") {
-        const a = e.toHidePosData[r];
-        s.isShown || s.show(), s.applyTween(a, t);
+      const a = i.get(s);
+      if (typeof a < "u") {
+        const r = e.toHidePosData[a];
+        s.isShown || s.show(), s.applyTween(r, t);
       }
     }
   }
@@ -1787,16 +1793,16 @@ function Dt(o, e, t, i) {
     throw new Error(d.errorFactoryInvalidContainer());
   if (s.length < 1)
     throw new Error(d.errorFactoryContainerNotFound());
-  const r = [];
-  for (let a = 0; a < s.length; a++) {
-    const c = s[a];
-    if (a > 0 && !i) break;
+  const a = [];
+  for (let r = 0; r < s.length; r++) {
+    const c = s[r];
+    if (r > 0 && !i) break;
     let l;
     c.id ? l = c.id : (l = "MixItUp" + E(), c.id = l);
     let h, f;
-    x.has(l) ? (h = x.get(l), (!e || e && e.debug && e.debug.showWarnings !== !1) && console.warn(d.warningFactoryPreexistingInstance())) : (h = new vt(), h.attach(c, n, l, e), x.set(l, h)), e && e.debug && e.debug.enable ? r.push(h) : (f = xt(h), r.push(f));
+    x.has(l) ? (h = x.get(l), (!e || e && e.debug && e.debug.showWarnings !== !1) && console.warn(d.warningFactoryPreexistingInstance())) : (h = new vt(), h.attach(c, n, l, e), x.set(l, h)), e && e.debug && e.debug.enable ? a.push(h) : (f = xt(h), a.push(f));
   }
-  return i ? new It(r) : r[0];
+  return i ? new It(a) : a[0];
 }
 export {
   It as Collection,
