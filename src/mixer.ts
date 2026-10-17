@@ -2121,7 +2121,17 @@ export class Mixer implements MixitupMixer {
 
         this.dom.parent!.insertBefore(frag, nextEl);
 
-        this.targets.splice(insertAt, 0, ...targets);
+        const insertionIndex = Math.min(insertAt, this.targets.length);
+
+        // Shift the tail once without passing the whole batch as function arguments.
+        for (let i = this.targets.length - 1; i >= insertionIndex; i--) {
+            this.targets[i + targets.length] = this.targets[i];
+        }
+
+        for (let i = 0; i < targets.length; i++) {
+            this.targets[insertionIndex + i] = targets[i];
+        }
+
         targets.length = 0;
     }
 
