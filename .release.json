@@ -1,5 +1,5 @@
 {
-  "branch": "develop",
+  "branch": "main",
   "sign_tag": true,
   "version_files": [
     "package.json",

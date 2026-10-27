@@ -1,6 +1,6 @@
 # Releasing
 
-Release from `develop` using an explicit version without a `v` prefix. `CHANGELOG.md` is the source of truth for GitHub release notes. The repo-local Python helper requires Python 3.9+, Git, and the project’s existing build/test tools; Shipmark is no longer used.
+Release from `main` using an explicit version without a `v` prefix. `CHANGELOG.md` is the source of truth for GitHub release notes. The repo-local Python helper requires Python 3.9+, Git, and the project’s existing build/test tools; Shipmark is no longer used.
 
 ## Prepare
 
@@ -40,8 +40,6 @@ Update `package.json` and both root version fields in `package-lock.json` to the
 Run `npm run build` and commit the tracked build output before releasing. Tests may rebuild assets; if checks change tracked files, review and commit the outputs, then repeat the dry-run.
 
 These are maintained forks with upstream npm names. GitHub tagging does not publish to npm. Publish a registry package only when explicitly requested and after confirming the intended name/account; inspect `npm pack --dry-run` first.
-
-Releases belong on `develop`. Merge feature/fix branches there before tagging; do not assume the fork uses `main`.
 
 ## Maintaining the release tools
 
