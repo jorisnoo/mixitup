@@ -137,6 +137,14 @@ function mixitup(
         let instance: Mixer;
         let facade: MixitupMixer;
 
+        const cached = instances.get(id);
+
+        // A container with the same ID that has since been removed from the document
+        // (e.g. replaced by a page transition) was never destroyed, so replace it.
+        if (cached && cached.dom.container !== el && !cached.dom.container!.isConnected) {
+            cached.destroy();
+        }
+
         if (instances.has(id)) {
             instance = instances.get(id)!;
 

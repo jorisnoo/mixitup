@@ -195,6 +195,28 @@ describe('mixitup()', () => {
         (mixer1 as any).destroy();
     });
 
+    it('should replace an instance whose container was removed from the document when a new container reuses its ID', () => {
+        const config = { debug: { enable: true }, controls: { enable: false } };
+        const oldContainer = dom.getContainer();
+        const newContainer = dom.getContainer();
+
+        oldContainer.id = newContainer.id = 'reused-id';
+        document.body.appendChild(oldContainer);
+
+        const oldMixer = mixitup(oldContainer, config) as any;
+
+        oldContainer.remove();
+        document.body.appendChild(newContainer);
+
+        const newMixer = mixitup(newContainer, config) as any;
+
+        expect(newMixer).not.toBe(oldMixer);
+        expect(newMixer.getState().container).toBe(newContainer);
+
+        newMixer.destroy();
+        newContainer.remove();
+    });
+
     it('should respect a `load.filter` configuration option of none', () => {
         const container = dom.getContainer();
         const mixer = mixitup(container, {
