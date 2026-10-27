@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.1] - 2026-10-27
+
+### Changed
+
+- Faster filtering, sorting and dataset operations on large grids: container visibility is checked once per mix instead of once per target (no more forced reflow between targets), end styles for all moved targets are applied in a single animation frame, and sort attributes are read once per target instead of on every comparison.
+- Replaced linear lookups inside loops with `Set`/`Map` lookups in filter, insert, remove, dataset diffing and state building.
+
+### Fixed
+
+- Sorting by an element collection reuses existing targets instead of creating new ones, fixing a `transitionend` listener leak on every sort.
+- Sorting by an attribute that is missing on some targets while others have non-numeric values no longer throws a `TypeError`.
+- Inserting or diffing very large datasets no longer hits the engine's function argument limit.
+
 ## [4.0.0](https://github.com/jorisnoo/mixitup/releases/tag/4.0.0) (2026-03-06)
 
 ### Features
