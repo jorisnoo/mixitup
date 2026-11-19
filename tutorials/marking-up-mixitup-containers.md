@@ -74,7 +74,7 @@ A common solution to laying out flex-box or inline-block-based grids with a pote
 
 Again, because the gap elements appear after all target elements, MixItUp will function correctly leaving gap elements untouched during insertion, removal, and sorting.
 
-- [Demo: Basic Grid Layout](https://patrickkunka.github.io/mixitup/demos/basic)
+- [Demo: Basic Grid Layout](../demos/basic/index.html)
 
 ## Instantiating Empty Containers
 
@@ -115,4 +115,4 @@ var firstGap = containerEl.querySelector('.gap');
 mixer.insertBefore('<div class="item mix"></div>', firstGap);
 ```
 
-- [Demo: Non-target First Element](https://patrickkunka.github.io/mixitup/demos/insertion-non-target-elements)
+- [Demo: Non-target First Element](../demos/insertion-non-target-elements/index.html)

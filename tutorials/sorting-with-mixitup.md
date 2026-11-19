@@ -1,6 +1,6 @@
 # Sorting with MixItUp
 
-_Sorting allows us to change the order of target elements in a MixItUp container. This tutorial will discuss the various sorting techniques available in MixItUp 3._
+_Sorting changes the order of target elements in a MixItUp container._
 
 ## Control Buttons
 
@@ -45,7 +45,7 @@ The default order is the order that targets are found in the DOM when MixItUp is
 <button type="button" data-sort="default:desc">Sort Descending</button>
 ```
 
-- [Demo: Sorting by Default](https://patrickkunka.github.io/mixitup/demos/sorting-by-attribute/)
+- [Demo: Sorting by Default](../demos/sorting-by-default/index.html)
 
 > [!NOTE]
 > You may use any clickable element as a control button, but <button type="button"> is recommended for accessibility, as it allows for easy keyboard control of your UI.
@@ -69,7 +69,7 @@ To sort our targets according to specific values, we can reference a custom data
 
 As can be seen in the above example, when we reference a custom data attribute, the initial `'data-'` segment of the attribute name is omitted for brevity.
 
-- [Demo: Sorting by Attribute](https://patrickkunka.github.io/mixitup/demos/sorting-by-attribute/)
+- [Demo: Sorting by Attribute](../demos/sorting-by-attribute/index.html)
 
 > [!WARNING]
 > When adding custom sorting attributes to your targets' markup, ensure that all attributes are present on _all_ targets in your container.
@@ -106,7 +106,7 @@ These types of sort strings are particularly useful when multiple targets in the
 
 The following demo shows sorting by `published-date`, then by `name`. Notice how the middle row (Alpha, Mike, and Zulu) share the same publish date (2016-09-03) and always remain in alphabetic order. As JavaScript sorting is "destructive", we could not guarantee this behavior without specifying a secondary attribute to sort by.
 
-- [Demo: Sorting by Multiple Attributes](https://patrickkunka.github.io/mixitup/demos/sorting-by-multiple-attributes/)
+- [Demo: Sorting by Multiple Attributes](../demos/sorting-by-multiple-attributes/index.html)
 
 ## Sort API
 
@@ -147,4 +147,4 @@ mixer.sort(collection)
 
 ## Dataset API
 
-All of the above techniques use either the DOM selector API or some form of interaction with the DOM. If you're building a modern JavaScript application with a data model, you may wish to use MixItUp 3's [Dataset API](./using-the-dataset-api.md) which allows us to bypass the DOM entirely and interact with MixItUp purely via changes to your model.
+If your application owns the data, the [Dataset API](./using-the-dataset-api.md) lets you pass items in the order you want to display them without querying the DOM.

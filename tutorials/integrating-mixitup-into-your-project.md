@@ -2,7 +2,7 @@
 
 _MixItUp can be integrated into in a variety of projects from static sites to WordPress themes and API-driven web applications._
 
-This tutorial will look at some of the most common types of integration and explore additional uses for MixItUp you may not have considered.
+First [install and import this ESM fork](../README.md#loading-mixitup). The examples below cover static markup, CMS-rendered content and API-driven applications.
 
 ## Static Site / Static Content
 
@@ -28,16 +28,16 @@ If we know what attributes we want to filter and sort by, we can simply hard-cod
 
 ```html
 <div class="controls">
-    <button type="button" data-filter=".web-design">Web Design<button>
-    <button type="button" data-filter=".ux-design">UX Design<button>
-    <button type="button" data-filter=".typography">Typography<button>
+    <button type="button" data-filter=".web-design">Web Design</button>
+    <button type="button" data-filter=".ux-design">UX Design</button>
+    <button type="button" data-filter=".typography">Typography</button>
 </div>
 ```
 
 Simple portfolio pages are the most common use-case for this type of integration. Due to their curated nature, portfolios typically include only a small amount of content (less than 100 items), and a known number of categories.
 
-- Further Reading: [Filtering with MixItUp](./filtering-with-mixitup)
-- Further Reading: [Sorting with MixItUp](./sorting-with-mixitup)
+- Further Reading: [Filtering with MixItUp](./filtering-with-mixitup.md)
+- Further Reading: [Sorting with MixItUp](./sorting-with-mixitup.md)
 
 ## Content Management Systems
 
@@ -104,8 +104,6 @@ If you know that your categories will never change, you could easily hard-code M
 
 The above examples could be applied to any CMS with similar APIs. For more information on WordPress theming, using "The Loop", or working with custom post types and taxonomies, please visit the **WordPress Codex**. Unfortunately we cannot respond to any questions relating to WordPress theming, but you will find a huge amount of information available if you search for it.
 
-This type of integration can be used for portfolios, blogs, event lists, team pages, e-commerce stores, and many more use-cases. Both the [MixItUp Pagination](https://github.com/patrickkunka/mixitup-pagination) and [MixItUp MultiFilter](https://github.com/patrickkunka/mixitup-multifilter) extensions can be very useful when dealing with the various UX challenges that may arise with these types of content.
-
 Due to the relative simplicity with which we can now integrate MixItUp with dynamic content, it may be tempting to see this is a one-size-fits-all solution to filtering and sorting dynamic content.
 
 However, it is important to be aware that **client-side filtering and sorting has some very real limits when it comes to scale.**
@@ -123,13 +121,9 @@ A common solution to this problem involves letting the back-end take on the resp
 
 This second "API-driven" approach is how many modern JavaScript web applications deal with filtering and sorting lists of content. While we incur a minor performance penalty equal to the duration of each API call, and a more "asynchronous" user-experience, this approach is infinitely scalable as the client need only know about the results of the query, and not the full dataset, which in the case of an e-commerce storefront could easily contain thousands or millions of items.
 
-New with MixItUp 3, the "Dataset API" allows us to enhance an API-driven user interface with beautiful filtering and sorting animations. For a in-depth introduction to the Dataset API please check out the [Using the Dataset API](./using-the-dataset-api.md) tutorial. As opposed to the "DOM-driven" approach described above, this "data-driven" approach provides a simple and highly performant means of integrating MixItUp into modern web applications, by abstracting away DOM querying and manipulation.
+The [Dataset API](./using-the-dataset-api.md) animates changes to an ordered array of items. Build your own controls, send the user's criteria to your API and pass the result to `mixer.dataset(items)`. Do not use DOM-based filter or sort controls with a dataset mixer.
 
-In any dataset integration, the developer is responsible for designing and implementing the UI to generate API queries and control MixItUp. Therefore, the ability to use default "controls" is disabled whenever dataset is in use. The same goes for all DOM-based MixItUp API methods such as `filter()`, `sort()`, and `paginate()`.
-
-### Dataset & Extensions
-
-It should be noted that when using the Dataset API, extensions such as MultiFilter and Pagination are no longer necessary (or compatible), as these extensions both employ DOM-based or selector-based techniques. With data-driven applications the data model replaces the DOM as the "source of truth", and we are limited only by what kind of filtering queries our API and database accept, which could easily include complex logical conditions, multi-attribute sorting, and pagination.
+Upstream v3 extensions such as MultiFilter and Pagination are not supported in this fork. To paginate, fetch or slice the page in your application, then pass just that page's items to the mixer.
 
 ## UI Components – Modals, Carousels and Accordions
 

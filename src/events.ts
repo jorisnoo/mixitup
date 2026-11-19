@@ -1,11 +1,11 @@
 import type { MixitupState } from './types/state';
-import { extend } from './helpers';
 
 export interface EventDetail {
     state: MixitupState | null;
     futureState: MixitupState | null;
     instance: any;
     originalEvent: Event | null;
+    control?: Element;
 }
 
 const EVENT_TYPES = ['mixStart', 'mixBusy', 'mixEnd', 'mixFail', 'mixClick'] as const;
@@ -38,7 +38,10 @@ export function fire(
         originalEvent: detail.originalEvent || null,
     };
 
-    const event = new CustomEvent(eventType, {
+    if (detail.control) eventDetail.control = detail.control;
+
+    const EventConstructor = doc?.defaultView?.CustomEvent ?? CustomEvent;
+    const event = new EventConstructor(eventType, {
         bubbles: true,
         cancelable: true,
         detail: eventDetail,

@@ -106,3 +106,6 @@ export interface MixitupConfig {
     selectors: ConfigSelectors;
     templates: ConfigTemplates;
 }
+
+/** Configuration accepted by the factory and configure(); omitted settings retain their values. */
+export type MixitupOptions = { [Group in keyof MixitupConfig]?: Partial<MixitupConfig[Group]> };

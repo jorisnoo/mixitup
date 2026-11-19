@@ -58,6 +58,40 @@ describe('mixitup()', () => {
 });
 
 describe('mixitup.Mixer', () => {
+    it('supports reserved property names as dataset identifiers without mistaking them for duplicates', async () => {
+        const mixer = mixitup(dom.getEmptyContainer(), {
+            data: { uidKey: 'id' },
+            render: { target: data => `<div class="mix">${data.id}</div>` },
+        });
+        const data = [{ id: 'constructor' }, { id: 'toString' }];
+        const state = await mixer.dataset(data);
+        expect(state.show.map(el => el.textContent)).toEqual(['constructor', 'toString']);
+        await mixer.dataset([]);
+        expect((await mixer.dataset(data)).show).toEqual(state.show);
+        expect(() => mixer.dataset([data[0], data[0]])).toThrow(/duplicate|two or more/i);
+        mixer.destroy();
+    });
+
+    it('refreshes using the active dataset and preserves record identity across external removals and moves', async () => {
+        const container = dom.getContainer();
+        const mixer = mixitup(container, {
+            data: { uidKey: 'id' },
+            load: { dataset: JSONDataset },
+        });
+        const active = JSONDataset.slice(1, 5);
+        const { targets } = await mixer.dataset(active);
+        mixer.forceRefresh();
+        expect(mixer.getState().activeDataset).toEqual(active);
+        targets[1].remove();
+        container.prepend(targets[3]);
+        mixer.forceRefresh();
+        const refreshed = mixer.getState();
+        expect(refreshed.targets).toEqual([targets[3], targets[0], targets[2]]);
+        expect(refreshed.activeDataset).toEqual([active[3], active[0], active[2]]);
+        expect((await mixer.dataset(active)).show).toEqual(targets);
+        mixer.destroy();
+    });
+
     describe('#insertDatasetFrag()', () => {
         it('should insert a large batch in place without exceeding the argument limit', () => {
             const mixer = new Mixer();

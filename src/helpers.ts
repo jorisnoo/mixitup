@@ -1,5 +1,23 @@
 import type { ConfigClassNames } from './types/config';
 
+function isPlainObject(value: unknown): value is Record<string, any> {
+    if (value === null || typeof value !== 'object') return false;
+
+    const proto = Object.getPrototypeOf(value);
+
+    return proto === null || proto === Object.prototype || (
+        Object.getPrototypeOf(proto) === null &&
+        Object.prototype.hasOwnProperty.call(proto, 'constructor') &&
+        typeof proto.constructor === 'function' &&
+        Function.prototype.toString.call(proto.constructor) === Function.prototype.toString.call(Object)
+    );
+}
+
+function isDate(value: object): value is Date {
+    // instanceof Date excludes dates from another window.
+    return !(Symbol.toStringTag in value) && Object.prototype.toString.call(value) === '[object Date]';
+}
+
 /**
  * Merges the properties of the source object onto the target object.
  * Alters the target object.
@@ -10,35 +28,23 @@ export function extend(
     deep: boolean = false,
     handleErrors: boolean = false
 ): Record<string, any> {
-    let sourceKeys: string[] = [];
-    const src = source as any;
+    if (!source) return destination;
 
     try {
-        if (Array.isArray(source)) {
-            for (let i = 0; i < source.length; i++) {
-                sourceKeys.push(String(i));
-            }
-        } else if (source) {
-            sourceKeys = Object.keys(source);
-        }
+        for (const key of Object.keys(source)) {
+            if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
 
-        for (let i = 0; i < sourceKeys.length; i++) {
-            const key = sourceKeys[i];
+            const value = (source as Record<string, any>)[key];
 
-            if (!deep || typeof src[key] !== 'object' || isElement(src[key])) {
-                destination[key] = src[key];
-            } else if (Array.isArray(src[key])) {
-                if (!destination[key]) {
-                    destination[key] = [];
-                }
-
-                extend(destination[key], src[key], deep, handleErrors);
-            } else {
-                if (!destination[key]) {
+            if (deep && isPlainObject(value)) {
+                if (!Object.prototype.hasOwnProperty.call(destination, key) || !isPlainObject(destination[key])) {
                     destination[key] = {};
                 }
 
-                extend(destination[key], src[key], deep, handleErrors);
+                extend(destination[key], value, true, handleErrors);
+            } else {
+                // Arrays (notably load.dataset) are values, not config groups.
+                destination[key] = deep && Array.isArray(value) ? value.slice() : value;
             }
         }
     } catch (err) {
@@ -163,23 +169,10 @@ export function dashCase(str: string): string {
  * Checks if a value is a DOM element.
  */
 export function isElement(el: any, doc?: Document): boolean {
-    doc = doc || window.document;
+    const view = (doc ?? el?.ownerDocument)?.defaultView;
 
-    if (window.HTMLElement && el instanceof window.HTMLElement) {
-        return true;
-    } else if (
-        doc.defaultView &&
-        doc.defaultView.HTMLElement &&
-        el instanceof doc.defaultView.HTMLElement
-    ) {
-        return true;
-    } else {
-        return (
-            el !== null &&
-            el.nodeType === 1 &&
-            typeof el.nodeName === 'string'
-        );
-    }
+    return (view?.HTMLElement && el instanceof view.HTMLElement) ||
+        (el?.nodeType === 1 && typeof el.nodeName === 'string');
 }
 
 /**
@@ -233,15 +226,22 @@ export function isEqualArray(a: any[], b: any[]): boolean {
 /**
  * Deep equality comparison for objects and primitives.
  */
-export function deepEquals(a: any, b: any): boolean {
-    if (typeof a === 'object' && a && typeof b === 'object' && b) {
-        if (Object.keys(a).length !== Object.keys(b).length) return false;
+export function deepEquals(a: unknown, b: unknown): boolean {
+    if (a === b) return true;
+    if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
 
-        for (const key in a) {
-            if (!Object.prototype.hasOwnProperty.call(b, key) || !deepEquals(a[key], b[key])) return false;
-        }
-    } else if (a !== b) {
-        return false;
+    if (Array.isArray(a) || Array.isArray(b)) {
+        if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    } else if (!isPlainObject(a) || !isPlainObject(b)) {
+        return isDate(a) && isDate(b) && Date.prototype.getTime.call(a) === Date.prototype.getTime.call(b);
+    }
+
+    const keys = Object.keys(a);
+    if (keys.length !== Object.keys(b).length) return false;
+
+    for (const key of keys) {
+        if (!Object.prototype.hasOwnProperty.call(b, key) ||
+            !deepEquals((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])) return false;
     }
 
     return true;
@@ -388,22 +388,24 @@ export function randomHex(): string {
     return ('00000' + (Math.random() * 16777216 << 0).toString(16)).substr(-6).toUpperCase();
 }
 
-/**
- * Returns the current document scroll and viewport state.
- */
-export function getDocumentState(doc?: Document): {
+export interface DocumentState {
     scrollTop: number;
     scrollLeft: number;
     docHeight: number;
     docWidth: number;
     viewportHeight: number;
     viewportWidth: number;
-} {
-    doc = doc && typeof doc.body === 'object' ? doc : window.document;
+}
+
+/**
+ * Returns the current document scroll and viewport state.
+ */
+export function getDocumentState(doc: Document = document): DocumentState {
+    const view = doc.defaultView;
 
     return {
-        scrollTop: window.pageYOffset,
-        scrollLeft: window.pageXOffset,
+        scrollTop: view?.pageYOffset ?? doc.documentElement.scrollTop,
+        scrollLeft: view?.pageXOffset ?? doc.documentElement.scrollLeft,
         docHeight: doc.documentElement.scrollHeight,
         docWidth: doc.documentElement.scrollWidth,
         viewportHeight: doc.documentElement.clientHeight,
@@ -417,10 +419,10 @@ export function getDocumentState(doc?: Document): {
 export function isVisible(el: HTMLElement): boolean {
     if (el.offsetParent) return true;
 
-    const styles = window.getComputedStyle(el);
+    const styles = el.ownerDocument.defaultView?.getComputedStyle(el);
 
     if (
-        styles.position === 'fixed' &&
+        styles?.position === 'fixed' &&
         styles.visibility !== 'hidden' &&
         styles.opacity !== '0'
     ) {

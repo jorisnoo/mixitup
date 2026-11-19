@@ -161,20 +161,16 @@ export class Control {
                 continue;
             }
 
-            if (!boundMixer.lastClicked) {
-                boundMixer.lastClicked = button;
-            }
-
             fire('mixClick', boundMixer.dom.container, {
                 state: boundMixer.state,
                 instance: boundMixer,
                 originalEvent: e,
-                control: boundMixer.lastClicked,
+                control: button,
             }, boundMixer.dom.document);
 
             if (typeof boundMixer.config.callbacks.onMixClick === 'function') {
                 returnValue = boundMixer.config.callbacks.onMixClick.call(
-                    boundMixer.lastClicked,
+                    button,
                     boundMixer.state,
                     e,
                     boundMixer
@@ -185,13 +181,7 @@ export class Control {
                 }
             }
 
-            if (this.type === 'toggle') {
-                isActive
-                    ? boundMixer.toggleOff(cmd.filter)
-                    : boundMixer.toggleOn(cmd.filter);
-            } else {
-                boundMixer.multimix(cmd);
-            }
+            boundMixer.mixControl(cmd, button, this.type === 'toggle' ? !isActive : undefined);
         }
     }
 

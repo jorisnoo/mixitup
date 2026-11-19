@@ -1,15 +1,8 @@
-# mixitup.Config
+# Mixer configuration
 
 ## Overview
 
-`mixitup.Config` is an interface used for customising the functionality of a
-mixer instance. It is organised into several semantically distinct sub-objects,
-each one pertaining to a particular aspect of MixItUp functionality.
-
-An object literal containing any or all of the available properies,
-known as the "configuration object", can be passed as the second parameter to
-the `mixitup` factory function when creating a mixer instance to customise its
-functionality as needed.
+A mixer’s configuration is organised into groups such as `animation`, `controls` and `load`. Pass only the options you want to change as the second argument to the [factory](./mixitup.md).
 
 If no configuration object is passed, the mixer instance will take on the default
 configuration values detailed below.
@@ -63,11 +56,11 @@ var mixer = mixitup(containerEl, {
 
 A string of one or more space-separated properties to which transitions will be
 applied for all filtering animations.
-         *
+
 Properties can be listed any order or combination, although they will be applied in a specific
 predefined order to produce consistent results.
-         *
-To learn more about available effects, experiment by providing different animation configurations to any of our [demos](https://patrickunka.github.io/mixitup/demos).
+
+Try different animation settings in the [local demos](../demos/index.html).
 
 
 |Type | Default
@@ -1387,9 +1380,7 @@ A group of properties allowing the toggling of various debug features.
 A boolean dictating whether or not the mixer instance returned by the
 `mixitup()` factory function should expose private properties and methods.
 
-By default, mixer instances only expose their public API, but enabling
-debug mode will give you access to various mixer internals which may aid
-in debugging, or the authoring of extensions.
+By default, a mixer exposes only its public API. Debug mode exposes implementation details for inspection, not a supported extension API.
 
 
 |Type | Default

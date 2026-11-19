@@ -1,8 +1,37 @@
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, afterAll, vi } from 'vitest';
 import mixitup from '../../src/index';
 import * as dom from '../mock/dom';
 
 describe('mixitup.Mixer', () => {
+    it('refreshes listeners, ordering, visibility and state after external DOM changes', () => {
+        const container = dom.getContainer();
+        const mixer = mixitup(container, {
+            load: { filter: '.category-a', sort: 'views:desc' },
+        });
+        const removed = mixer.getState().show[0];
+        const unbind = vi.spyOn(removed, 'removeEventListener');
+        removed.remove();
+        const hidden = dom.getTarget();
+        container.prepend(hidden);
+        const shown = dom.getTarget();
+        shown.classList.add('category-a');
+        shown.setAttribute('data-views', '1000');
+        container.append(shown);
+        mixer.forceRefresh();
+        const state = mixer.getState();
+        expect(unbind).toHaveBeenCalledWith('transitionend', expect.any(Function));
+        expect(unbind).toHaveBeenCalledWith('transitioncancel', expect.any(Function));
+        expect(state.totalTargets).toBe(7);
+        expect(state.totalShow).toBe(3);
+        expect(state.totalHide).toBe(4);
+        expect(state.targets).toEqual(Array.from(container.querySelectorAll('.mix')));
+        expect(state.targets[0]).toBe(shown);
+        expect(state.matching).toEqual(state.show);
+        expect(state.show).not.toContain(removed);
+        expect(hidden.style.display).toBe('none');
+        mixer.destroy();
+    });
+
     describe('#getState()', () => {
         const container = dom.getContainer();
         const id = container.id = 'test-id';

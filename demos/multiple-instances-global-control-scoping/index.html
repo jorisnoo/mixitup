@@ -40,14 +40,14 @@
             <div class="gap"></div>
         </div>
 
-        <script src="../../dist/mixitup.min.js"></script>
+        <script type="module">
+            import mixitup from '../../dist/mixitup.js';
 
-        <script>
             var containerEl1 = document.querySelector('[data-ref="container-1"]');
             var containerEl2 = document.querySelector('[data-ref="container-2"]');
 
-            var mixer1 = mixitup(containerEl1);
-            var mixer1 = mixitup(containerEl2);
+            mixitup(containerEl1);
+            mixitup(containerEl2);
         </script>
     </body>
 </html>

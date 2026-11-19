@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.2] - 2026-11-19
+
+### Fixed
+
+- Mixer types now accept nested configuration options, optional animation flags and callbacks, and documented multimix commands. The distributed declarations are checked from a strict consumer project.
+- Configuration updates cannot merge into object prototypes; setting an option to `null` clears it. Dataset records preserve application values such as dates, and ordinary string IDs no longer conflict with inherited object properties.
+- Interrupted transitions and failing callbacks no longer stall the operation queue. Disabling animation takes precedence over a per-call animation request. Queued control clicks identify the button that triggered each mix, and destroying a mixer settles pending operations.
+- Containers are identified by element, not ID. Refreshing targets resynchronizes state and listeners, and iframe operations use the container's document and window.
+- The installation guide, examples and demos target this fork’s tagged ESM distribution rather than the upstream npm package.
+
 ## [4.0.1] - 2026-10-27
 
 ### Changed

@@ -51,18 +51,6 @@ var mixer = mixitup(containerEl, {
 });
 ```
 
-When using the [MixItUp Pagination extension](http://github.com/patrickkunka/mixitup-pagination), we can also use the `load` configuration stanza to specify a starting page other than page 1.
-
-### Example: Setting the starting page on load
-
-```js
-var mixer = mixitup(containerEl, {
-    load: {
-        page: 2
-    }
-});
-```
-
 ## Possible Uses
 
 Rather than hard coding in our values like the above examples, the `load` configuration stanza is typically used dynamically, so that MixItUp can be instantiated according to some previously recorded state in an automated way.
@@ -90,19 +78,19 @@ var initialFilter = 'all';
 var hash = window.location.hash.replace(/^#/g, '');
 
 if (hash) {
-    initialFilter = '.' + hash;
+    initialFilter = '.' + CSS.escape(hash);
 }
 ```
 
 In the above example, the URL hash would be equivalent to a particular class name present on target elements, but any value could be used as long as it can be predictably mapped into a DOM selector string.
 
-Check out the ["Filtering by URL"](./filtering-by-url) demo for a fully integrated version of this concept using the history API.
+See the [Filtering by URL demo](../demos/filtering-by-url/index.html) for an example using the history API.
 
 ## Dealing with Complex State
 
 A more complex `load` state, involving compound selectors, or simultaneous filtering and sorting, requires a URL structure that can contain all the necessary data, (ideally in a human readable format) as well as an associated mapping function to transform it into values compatible with the MixItUp API.
 
-Users of the [MixItUp MultiFilter](https://github.com/patrickkunka/mixitup-multifilter) extension will find a more complex "Programmatic Filtering by URL" demo included in the extension, utilizing a hash structure similar to the following, which is then broken down into individual filter groups by a custom deserializer function:
+For example, an application could parse this hash into type, size and color, map the values to its known categories, and combine them into a selector:
 
 ```text
 /store/#type=shirt&size=medium,large&color=red
@@ -119,8 +107,8 @@ Alternatively, If we are tracking internal application state with a state store 
 ```js
 var mixer = mixitup(containerEl, {
     load: {
-        filter: `[data-category="${state.category}"]`
-        sort: `[data-sort="${state.order}"]`
+        filter: `[data-category="${CSS.escape(state.category)}"]`,
+        sort: state.order === 'newest' ? 'published-date:desc' : 'published-date:asc'
     }
 });
 ```
@@ -135,7 +123,7 @@ var mixer = mixitup(containerEl, {
         uidKey: 'id'
     },
     load: {
-        dataset: [{id: 1, ...}, {id: 2, ...}, {id: 3, ...}]
+        dataset: [{id: 1}, {id: 2}, {id: 3}]
     }
 });
 ```

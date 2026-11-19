@@ -1,5 +1,7 @@
 # MixItUp 3 Migration Guide
 
+> **Historical upstream guide:** This page describes the transition from upstream v2 to v3. It is not an installation or migration guide for this ESM-only v4 fork. For current setup, see [Loading MixItUp](../README.md#loading-mixitup).
+
 The biggest change to MixItUp with v3, is the dropping of jQuery as a dependency. MixItUp 1 and 2 both existed as jQuery plugins, with instantiation and API calls abstracted away through a typical jQuery-plugin interface.
 
 With MixItUp 3, we can now interact with MixItUp instances ('mixers') directly with minimal abstraction.
@@ -102,4 +104,4 @@ With MixItUp 3, loading animations are removed by default, and mixers are instan
 
 In short – you no longer need to set `display: none` in your CSS. Simply use whatever display value your layout would require, regardless of MixItUp.
 
-Loading animations are still possible in MixItUp 3 as demonstrated in the [Loading Animation](http://patrickkunka.github.io/mixitup/demos/loading-animation/) demo. The code for this demo is available [here](../demos/loading-animation/index.html).
+For the same effect in this fork, see the [loading animation demo](../demos/loading-animation/index.html).

@@ -34,9 +34,9 @@
             <div class="mix green"></div>
         </div>
 
-        <script src="../../dist/mixitup.min.js"></script>
+        <script type="module">
+            import mixitup from '../../dist/mixitup.js';
 
-        <script>
             var containerEl = document.querySelector('.container');
 
             var mixer = mixitup(containerEl, {

@@ -2,17 +2,7 @@
 
 ## Introduction and Background
 
-As you can probably tell from its selector-driven API, MixItUp hails from the jQuery era. While we've left jQuery behind with version 3, much of MixItUp's functionality is still based on the concept of querying the DOM in order to filter and sort your content.
-
-With the release of MixItUp 3, we wanted to give our users the ability to break free from this paradigm and integrate MixItUp more seamlessly into the UI components of modern data-driven JavaScript applications.
-
-We still feel there's a time and a place for MixItUp's selector-based APIs like `filter()`, `sort()`, and `multimix()`. After all, not every UI component has underlying data, and many front-end developers do not work closely with back-end code or application data models, so unabstracted selector querying is often still the best option for manipulating the DOM.
-
-We believed that in the right circumstances however, developers should be able control MixItUp **directly via changes to their application data model**, and bypass the ugliness of working with the DOM directly.
-
-We wanted to do this in a way that wasn't tightly coupled to a particular front-end framework, and future-proof MixItUp against framework obsolescence in the process.
-
-The following tutorial will demonstrate how we can perform all of MixItUp's existing functionality using the Dataset API, and will attempt to do so in a general way that can hopefully be integrated into applications built with any framework or none.
+Use DOM selectors when the markup is your source of truth. When your application already has an ordered list of records, use the Dataset API instead: pass a new list and MixItUp animates the insertions, removals and changes of order. This approach does not require a particular framework.
 
 ## Get Started
 
@@ -285,6 +275,6 @@ The following two examples show the Dataset API in use. The first demo shows the
 
 Both demos use a "mock API" to mimic the back-end and DB side of the application, and are integrated with custom UI.
 
-- [Demo: Dataset with Empty Container](https://patrickkunka.github.io/mixitup/demos/dataset-empty-container/)
-- [Demo: Dataset with Pre-rendered Targets](https://patrickkunka.github.io/mixitup/demos/dataset-pre-rendered-targets/)
+- [Demo: Dataset with Empty Container](../demos/dataset-empty-container/index.html)
+- [Demo: Dataset with Pre-rendered Targets](../demos/dataset-pre-rendered-targets/index.html)
 

@@ -55,9 +55,9 @@
             </div>
         </div>
 
-        <script src="../../dist/mixitup.min.js"></script>
+        <script type="module">
+            import mixitup from '../../dist/mixitup.js';
 
-        <script>
             var containerEl1 = document.querySelector('[data-ref="container-1"]');
             var containerEl2 = document.querySelector('[data-ref="container-2"]');
 
@@ -67,8 +67,8 @@
                 }
             };
 
-            var mixer1 = mixitup(containerEl1, config);
-            var mixer1 = mixitup(containerEl2, config);
+            mixitup(containerEl1, config);
+            mixitup(containerEl2, config);
         </script>
     </body>
 </html>

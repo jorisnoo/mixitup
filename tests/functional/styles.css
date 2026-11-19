@@ -46,21 +46,15 @@ body {
     background: #eee;
 }
 
-.mixitup-control,
-.mixitup-pager {
+.control {
     cursor: pointer;
     display: inline-block;
     padding: .5rem;
     background: #eee;
 }
 
-.mixitup-control-active,
-.mixitup-pager-active {
+.mixitup-control-active {
     font-weight: bold;
-}
-
-.mixitup-pager-disabled {
-    opacity: .8;
 }
 
 .mix {
@@ -92,20 +86,6 @@ body {
     padding-top: 100%;
 }
 
-.mixitup-target-placeholder {
-    background: transparent !important;
-    border: 2px dashed #ccc;
-    box-sizing: border-box;
-}
-
-.mixitup-target-dragging {
-    opacity: .5;
-}
-
-.mixitup-target-closest {
-    border: 3px solid orange;
-}
-
 .sandbox {
     overflow: hidden;
     text-align: justify;
@@ -117,10 +97,6 @@ body {
     content: '';
     width: 100%;
     display: inline-block;
-}
-
-.sandbox__mixitup .mix {
-
 }
 
 .mix.cat-2 {

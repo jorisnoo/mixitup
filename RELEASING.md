@@ -7,14 +7,18 @@ Release from `main` using an explicit version without a `v` prefix. `CHANGELOG.m
 1. Review changes since the last release and choose the version from compatibility: patch for fixes, minor for compatible additions, major for breaking changes. For a pre-1.0 package, describe incompatible changes explicitly and normally bump the minor version. Do not infer the bump solely from commit prefixes.
 2. Add a curated entry at the top of `CHANGELOG.md`: `## [X.Y.Z] - YYYY-MM-DD`. Use only relevant sections such as Added, Changed, Fixed, and Breaking. Explain user-visible behavior and migrations; combine related commits and omit routine dependency/CI noise. Preserve all historical entries. Use `X.Y.Z` everywhere, including release links.
 3. Update the version files and build outputs described below. Run the relevant checks, review the complete diff, and commit only the intended release changes (normally `release: X.Y.Z`). Respect configured Git commit signing. Never include unrelated local work.
+4. Open a release-preparation PR against `main` and require the `test` check on its final revision. Use that reviewed tree for the release. Do not bypass a failing PR check by pushing a tag: the tag workflow publishes the release rather than granting approval to merge.
 
 Configured release checks:
 
 ```sh
-npm test
+npm ci
+npm run check
 ```
 
-Install the project’s normal dependencies first. The helper runs these checks when publishing; dry-run prints them without executing them. Run any additional checks needed for the changed behavior before committing.
+Use Node 24 LTS. `npm ci` installs the locked development dependencies. CI and the release helper run the same `check` script: audit development dependencies, build the distribution, type-check the library and strict consumer examples, and run the DOM tests. CI also compares the rebuilt distribution with the committed files.
+
+API Extractor 7.60.1 pins an affected `minimatch` version (GHSA-g3hv-75wg-m249); the override selects the patched matcher for that extractor version only. Remove it once the extractor's own pin is fixed.
 
 ## Release
 

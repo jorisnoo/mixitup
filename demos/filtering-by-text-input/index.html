@@ -37,9 +37,9 @@
             <div class="gap"></div>
         </div>
 
-        <script src="../../dist/mixitup.min.js"></script>
+        <script type="module">
+            import mixitup from '../../dist/mixitup.js';
 
-        <script>
             var container = document.querySelector('[data-ref="container"]');
             var inputSearch = document.querySelector('[data-ref="input-search"]');
             var keyupTimeout;
@@ -95,7 +95,7 @@
                 if (searchValue) {
                     // Use an attribute wildcard selector to check for matches
 
-                    mixer.filter('[class*="' + searchValue + '"]');
+                    mixer.filter('[class*="' + CSS.escape(searchValue) + '"]');
                 } else {
                     // If no searchValue, treat as filter('all')
 

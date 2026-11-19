@@ -217,6 +217,43 @@ describe('mixitup()', () => {
         newContainer.remove();
     });
 
+    it('keeps overlapping containers with the same ID independent', () => {
+        const first = dom.getContainer();
+        const second = dom.getContainer();
+        first.id = second.id = 'overlap';
+        document.body.append(first, second);
+        const options = { debug: { enable: true, showWarnings: false } };
+        const a = mixitup(first, options);
+        const b = mixitup(second, options);
+
+        expect(b.getState().container).toBe(second);
+        a.destroy();
+        expect(mixitup(second, options)).toBe(b);
+        b.destroy();
+        first.remove();
+        second.remove();
+    });
+
+    it('releases persistent control bindings when an auto-ID container leaves the document', async () => {
+        const parent = document.createElement('section');
+        const container = dom.getContainer();
+        container.removeAttribute('id');
+        const button = document.createElement('button');
+        button.dataset.filter = 'none';
+        parent.append(container);
+        document.body.append(button, parent);
+        let clicks = 0;
+        mixitup(container, { callbacks: { onMixClick() { clicks++; } } });
+
+        button.click();
+        expect(clicks).toBe(1);
+        parent.remove();
+        await Promise.resolve(); // allow the removal observer to dispose the binding
+        button.click();
+        expect(clicks).toBe(1);
+        button.remove();
+    });
+
     it('should respect a `load.filter` configuration option of none', () => {
         const container = dom.getContainer();
         const mixer = mixitup(container, {

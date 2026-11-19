@@ -35,7 +35,7 @@ body {
     background: #3f3f3f;
 }
 
-.control[data-filter]:after {
+.control[data-color]:after {
     content: '';
     position: absolute;
     width: 10px;
@@ -64,11 +64,12 @@ body {
     transform:  translateY(-4px) rotate(-135deg);
 }
 
-.mixitup-control-active {
+.mixitup-control-active,
+.control[aria-pressed="true"] {
     background: #393939;
 }
 
-.mixitup-control-active[data-filter]:after {
+.control[aria-pressed="true"]:after {
     background: transparent;
 }
 
@@ -80,23 +81,23 @@ body {
     border-radius: 0 3px 3px 0;
 }
 
-.control[data-filter] + .control[data-sort] {
+.control[data-color] + .control[data-sort] {
     margin-left: .75rem;
 }
 
-.control[data-filter=".green"] {
+.control[data-color="green"] {
     color: #91e6c7;
 }
 
-.control[data-filter=".blue"] {
+.control[data-color="blue"] {
     color: #5ecdde;
 }
 
-.control[data-filter=".pink"] {
+.control[data-color="pink"] {
     color: #d595aa;
 }
 
-.control[data-filter="none"] {
+.control[data-color="none"] {
     color: #2f2f2f;
 }
 

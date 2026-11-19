@@ -1,4 +1,4 @@
-/* global mixitup */
+import mixitup from '../../dist/mixitup.js';
 
 var sandbox     = document.querySelector('.sandbox');
 
@@ -8,33 +8,10 @@ var mixer = mixitup('#sandbox-1', {
         easing: 'cubic-bezier(1, 0, 0, 1)',
         duration: 400
     },
-    controls: {
-        scope: 'global',
-        live: false
-        // toggleLogic: 'and'
-    },
-    pagination: {
-        limit: 4,
-        maxPagers: 6
-    },
     load: {
-        // filter: 'none',
         sort: 'random'
-    },
-    // dragndrop: {
-    //     enable: true,
-    //     hidePlaceholder: false,
-    //     debounceDelay: 20,
-    //     detection: 'collision',
-    //     // liveSort: false
-    //     // swap: true
-    // },
-    callbacks: {
-        // onMixLift: function() {
-        //     console.log('lift', this);
-        // }
     }
-}, null);
+});
 
 console.log(mixer.getState());
 
@@ -58,8 +35,6 @@ sandbox.addEventListener('mixFail', function(e) {
     console.log('mixFail', e.detail);
 });
 
-sandbox.classList.add('sandbox__mixitup');
-
 document.querySelector('.js-append').addEventListener('click', function() {
    mixer.append('<div class="mix cat-3" data-order="3">C 3</div>');
 });
@@ -69,7 +44,7 @@ document.querySelector('.js-prepend').addEventListener('click', function() {
 });
 
 document.querySelector('.js-insert-at-index').addEventListener('click', function() {
-   mixer.insert(4, '<div class="mix cat-4" data-order="5">D 5</div>');
+   mixer.insert('<div class="mix cat-4" data-order="5">D 5</div>', 4);
 });
 
 document.querySelector('.js-remove-via-element').addEventListener('click', function() {
@@ -93,17 +68,15 @@ document.querySelector('.js-insert-multiple-via-markup').addEventListener('click
 });
 
 document.querySelector('.js-insert-multiple-via-elements').addEventListener('click', function() {
-    var h   = mixitup.h,
-        el1 = h.createElement('<div class="mix cat-4" data-order="1">D 1</div>').children[0],
-        el2 = h.createElement('<div class="mix cat-4" data-order="2">D 2</div>').children[0],
-        el3 = h.createElement('<div class="mix cat-4" data-order="3">D 3</div>').children[0],
-        elements = [el1, el2, el3];
-
-    // Going into the mixer backwards?
-
-    mixer.multiMix({
-        insert: elements
+    const elements = [1, 2, 3].map(order => {
+        const target = document.createElement('div');
+        target.className = 'mix cat-4';
+        target.dataset.order = String(order);
+        target.textContent = `D ${order}`;
+        return target;
     });
+
+    mixer.prepend(elements);
 });
 
 document.querySelector('.js-api-filter').addEventListener('click', function() {
@@ -116,18 +89,6 @@ document.querySelector('.js-api-filter-compound').addEventListener('click', func
 
 document.querySelector('.js-api-sort').addEventListener('click', function() {
     mixer.sort('order:asc');
-});
-
-document.querySelector('.js-api-limit-3').addEventListener('click', function() {
-    mixer.paginate({limit: 3});
-});
-
-document.querySelector('.js-api-limit-inf').addEventListener('click', function() {
-    mixer.paginate({limit: Infinity});
-});
-
-document.querySelector('.js-api-limit-10').addEventListener('click', function() {
-    mixer.paginate({limit: 10});
 });
 
 var dataset = [{
@@ -150,42 +111,11 @@ var dataMixer = mixitup('#sandbox-2', {
     }
 });
 
-dataset.push({
-    id: '14',
-    category: '2'
-}, {
-    id: '2',
-    category: '3'
-});
-
-var first;
-
-dataMixer.dataset(dataset)
-    .then(function() {
-        dataset.reverse();
-
-        return dataMixer.dataset(dataset);
-    })
-    .then(function() {
-        first = dataset.shift();
-
-        return dataMixer.dataset(dataset);
-    })
-    .then(function() {
-        dataset.push(first);
-
-        return dataMixer.dataset(dataset);
-    })
-    .then(function() {
-        dataset = [dataset[2], dataset[0]];
-
-        return dataMixer.dataset(dataset);
-    })
-    .then(function() {
-        dataset[1] = {
-            id: '14',
-            category: '4'
-        };
-
-        return dataMixer.dataset(dataset);
-    });
+// Supply a new array for each state so the previous dataset stays unchanged.
+const expanded = [...dataset, { id: '14', category: '2' }, { id: '2', category: '3' }];
+await dataMixer.dataset(expanded);
+const reversed = [...expanded].reverse();
+await dataMixer.dataset(reversed);
+await dataMixer.dataset(reversed.slice(1));
+await dataMixer.dataset([...reversed.slice(1), reversed[0]]);
+await dataMixer.dataset([reversed[0], { id: '14', category: '4' }]);

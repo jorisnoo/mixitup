@@ -1,8 +1,44 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import mixitup from '../../src/index';
 import * as dom from '../mock/dom';
 
 describe('mixitup()', () => {
+    it.each(['onMixEnd', 'onMixFail', 'per-call'] as const)(
+        'rejects a throwing %s callback without stranding queued or subsequent mixes',
+        async name => {
+            const error = new Error('callback failed');
+            const callback = vi.fn().mockImplementationOnce(() => { throw error; });
+            const mixer = mixitup(dom.getContainer(), {
+                animation: { duration: 1 },
+                debug: { fauxAsync: true },
+                callbacks: name === 'per-call' ? {} : { [name]: callback },
+            });
+            const first = name === 'per-call'
+                ? mixer.filter('.missing', callback)
+                : mixer.filter('.missing');
+            const next = mixer.show();
+            await expect(first).rejects.toBe(error);
+            expect((await next).totalShow).toBe(6);
+            expect(mixer.isMixing()).toBe(false);
+            expect((await mixer.hide()).totalShow).toBe(0);
+            mixer.destroy();
+        }
+    );
+
+    it('settles an operation destroyed from its start callback without dispatching mixEnd', async () => {
+        const container = dom.getContainer();
+        const end = vi.fn();
+        const mixer = mixitup(container, {
+            callbacks: {
+                onMixStart() { mixer.destroy(); },
+                onMixEnd: end,
+            },
+        });
+        await mixer.hide();
+        expect(mixer.isMixing()).toBe(false);
+        expect(end).not.toHaveBeenCalled();
+    });
+
     it('should accept an `onMixStart` callback, invoked at the start of operations', async () => {
         const container = dom.getContainer();
         let wasCalled = false;

@@ -1,4 +1,4 @@
-import type { MixitupConfig } from './types/config';
+import type { MixitupConfig, MixitupOptions } from './types/config';
 import type { MixitupState } from './types/state';
 import type { MixitupMixer } from './types/public-api';
 import type { StyleData, TransformData, IMoveData } from './types/style-data';
@@ -32,6 +32,7 @@ import { Target } from './target';
 import { Control, controls } from './control';
 import { controlDefinitions } from './control-definition';
 import { fire } from './events';
+import { unregisterInstance } from './instances';
 import { features } from './features';
 import { messages } from './messages';
 import {
@@ -91,7 +92,8 @@ interface SortKey {
     string: string;
 }
 
-export const instances: Map<string, Mixer> = new Map();
+// Allow for frame scheduling and rounding of CSS transition timings.
+const TRANSITION_SLACK_MS = 100;
 
 function createStyleData(): StyleData {
     return {
@@ -144,18 +146,20 @@ export class Mixer implements MixitupMixer {
     id: string = '';
 
     isBusy: boolean = false;
-    isToggling: boolean = false;
+    private destroyed = false;
+    private activeOperation: Operation | null = null;
+    private frame: number | null = null;
+    private timer: number | null = null;
+    private refreshPending = false;
     incPadding: boolean = true;
 
     controls: Control[] = [];
     targets: Target[] = [];
     origOrder: Target[] = [];
-    cache: Record<string, Target> = {};
+    cache: Record<string, Target> = Object.create(null);
 
     toggleArray: string[] = [];
 
-    targetsMoved: number = 0;
-    targetsImmovable: number = 0;
     targetsBound: number = 0;
     targetsDone: number = 0;
 
@@ -168,7 +172,6 @@ export class Mixer implements MixitupMixer {
 
     state: MixitupState | null = null;
     lastOperation: Operation | null = null;
-    lastClicked: Element | null = null;
     userCallback: ((...args: any[]) => void) | null = null;
     userDeferred: { resolve: (value: any) => void; reject: (reason?: any) => void; promise: Promise<any> } | null = null;
 
@@ -180,7 +183,7 @@ export class Mixer implements MixitupMixer {
         targets: [],
     };
 
-    attach(container: HTMLElement, doc: Document, id: string, config?: Partial<MixitupConfig>): void {
+    attach(container: HTMLElement, doc: Document, id: string, config?: MixitupOptions): void {
         this.id = id;
 
         if (config) {
@@ -188,7 +191,7 @@ export class Mixer implements MixitupMixer {
         }
 
         this.sanitizeConfig();
-        this.cacheDom(container, doc);
+        this.cacheDom(container);
 
         if (this.config.layout.containerClassName) {
             this.dom.container!.classList.add(this.config.layout.containerClassName);
@@ -198,7 +201,7 @@ export class Mixer implements MixitupMixer {
             this.config.controls.enable = false;
         }
 
-        this.indexTargets();
+        this.indexTargets(this.findTargets(), this.config.load.dataset);
 
         this.state = this.getInitialState();
 
@@ -207,7 +210,7 @@ export class Mixer implements MixitupMixer {
         }
 
         if (this.config.controls.enable) {
-            this.initControls();
+            this.initControls(doc);
             this.buildToggleArray(null, this.state);
             this.updateControls({
                 filter: this.state!.activeFilter,
@@ -280,26 +283,32 @@ export class Mixer implements MixitupMixer {
         return state;
     }
 
-    private cacheDom(el: HTMLElement, doc: Document): void {
-        this.dom.document = doc;
+    private cacheDom(el: HTMLElement): void {
+        this.dom.document = el.ownerDocument;
         this.dom.body = this.dom.document.querySelector('body');
         this.dom.container = el;
         this.dom.parent = el;
     }
 
-    private indexTargets(): void {
-        const domTargets = this.config.layout.allowNestedTargets
-            ? this.dom.container!.querySelectorAll(this.config.selectors.target)
+    private findTargets(): Element[] {
+        return this.config.layout.allowNestedTargets
+            ? Array.from(this.dom.container!.querySelectorAll(this.config.selectors.target))
             : children(this.dom.container!, this.config.selectors.target);
+    }
 
-        this.dom.targets = Array.from(domTargets);
-        this.targets = [];
-
-        const dataset = this.config.load.dataset;
-
-        if (dataset && dataset.length !== this.dom.targets.length) {
+    private indexTargets(domTargets: Element[], dataset: MixitupState['activeDataset']): void {
+        if (dataset && dataset.length !== domTargets.length) {
             throw new Error((messages.errorDatasetPrerenderedMismatch as Function)());
         }
+
+        for (const target of this.targets) {
+            target.unbindEvents();
+            target.isInDom = false;
+        }
+
+        this.dom.targets = domTargets;
+        this.dom.parent = this.dom.container;
+        this.targets = [];
 
         if (this.dom.targets.length) {
             for (let i = 0; i < this.dom.targets.length; i++) {
@@ -320,7 +329,7 @@ export class Mixer implements MixitupMixer {
         this.origOrder = this.targets;
     }
 
-    private initControls(): void {
+    private initControls(root: Document): void {
         let parent: Element | Document;
 
         switch (this.config.controls.scope) {
@@ -328,7 +337,7 @@ export class Mixer implements MixitupMixer {
                 parent = this.dom.container!;
                 break;
             case 'global':
-                parent = this.dom.document!;
+                parent = root;
                 break;
             default:
                 throw new Error((messages.errorConfigInvalidControlsScope as Function)());
@@ -729,10 +738,17 @@ export class Mixer implements MixitupMixer {
         const nextSibling = startOrder.length
             ? startOrder[startOrder.length - 1].dom.el!.nextElementSibling
             : null;
-        const frag = window.document.createDocumentFragment();
+        const doc = this.dom.document!;
+        const frag = doc.createDocumentFragment();
+        let missing: Set<Target> | undefined;
 
         for (const target of startOrder) {
             const el = target.dom.el as HTMLElement;
+
+            if (!el.parentElement) {
+                (missing ??= new Set()).add(target);
+                continue;
+            }
 
             if (el.style.position === 'absolute') continue;
 
@@ -747,21 +763,22 @@ export class Mixer implements MixitupMixer {
         }
 
         for (const target of newOrder) {
+            if (missing?.has(target)) continue;
             const el = target.dom.el as HTMLElement;
 
-            if (isElement(frag.lastChild!)) {
-                frag.appendChild(window.document.createTextNode(' '));
+            if (frag.lastElementChild) {
+                frag.appendChild(doc.createTextNode(' '));
             }
 
             frag.appendChild(el);
         }
 
         if (this.dom.parent!.firstChild && this.dom.parent!.firstChild !== nextSibling) {
-            frag.insertBefore(window.document.createTextNode(' '), frag.childNodes[0]);
+            frag.insertBefore(doc.createTextNode(' '), frag.firstChild);
         }
 
         if (nextSibling) {
-            frag.appendChild(window.document.createTextNode(' '));
+            frag.appendChild(doc.createTextNode(' '));
             this.dom.parent!.insertBefore(frag, nextSibling);
         } else {
             this.dom.parent!.appendChild(frag);
@@ -955,7 +972,12 @@ export class Mixer implements MixitupMixer {
     }
 
     private goMix(shouldAnimate: boolean, operation: Operation): Promise<MixitupState> {
+        const view = this.dom.document!.defaultView;
         if (
+            !shouldAnimate ||
+            !this.config.animation.enable ||
+            !operation.docState ||
+            !view ||
             !this.config.animation.duration ||
             !this.config.animation.effects ||
             !isVisible(this.dom.container!)
@@ -979,41 +1001,35 @@ export class Mixer implements MixitupMixer {
             shouldAnimate = false;
         }
 
-        fire('mixStart', this.dom.container!, {
-            state: operation.startState as MixitupState,
-            futureState: operation.newState as MixitupState,
-            instance: this,
-        }, this.dom.document!);
+        const deferred = this.userDeferred ??= this.createDeferred();
+        this.isBusy = true;
+        this.activeOperation = operation;
 
-        if (typeof this.config.callbacks.onMixStart === 'function') {
-            this.config.callbacks.onMixStart.call(
-                this.dom.container,
-                operation.startState as MixitupState,
-                operation.newState as MixitupState,
-                this
-            );
+        try {
+            fire('mixStart', this.dom.container!, {
+                state: operation.startState!,
+                futureState: operation.newState!,
+                instance: this,
+            }, this.dom.document!);
+
+            if (!this.destroyed) {
+                this.config.callbacks.onMixStart?.call(this.dom.container, operation.startState!, operation.newState!, this);
+            }
+        } catch (err) {
+            deferred.reject(err);
+            this.cleanUp(operation, false);
+            return deferred.promise;
         }
+
+        if (this.destroyed) return deferred.promise;
 
         this.dom.container!.classList.remove(
             getClassname(this.config.classNames, 'container', this.config.classNames.modifierFailed)
         );
 
-        let deferred: { resolve: (value: any) => void; reject: (reason?: any) => void; promise: Promise<any> };
-
-        if (!this.userDeferred) {
-            deferred = this.createDeferred();
-            this.userDeferred = deferred;
-        } else {
-            deferred = this.userDeferred;
-        }
-
-        this.isBusy = true;
-
         if (!shouldAnimate || !features.hasTransitions) {
             if (this.config.debug.fauxAsync) {
-                setTimeout(() => {
-                    this.cleanUp(operation);
-                }, this.config.animation.duration);
+                this.scheduleCompletion(operation, this.config.animation.duration);
             } else {
                 this.cleanUp(operation);
             }
@@ -1021,8 +1037,8 @@ export class Mixer implements MixitupMixer {
             return deferred.promise;
         }
 
-        if (window.pageYOffset !== operation.docState!.scrollTop) {
-            window.scrollTo(operation.docState!.scrollLeft, operation.docState!.scrollTop);
+        if (view!.pageYOffset !== operation.docState!.scrollTop || view!.pageXOffset !== operation.docState!.scrollLeft) {
+            view!.scrollTo(operation.docState!.scrollLeft, operation.docState!.scrollTop);
         }
 
         if (this.config.animation.applyPerspective) {
@@ -1058,11 +1074,26 @@ export class Mixer implements MixitupMixer {
             this.dom.parent!.style.overflow = 'hidden';
         }
 
-        requestAnimationFrame(() => {
+        // Frames may stop altogether when the document becomes hidden.
+        this.scheduleCompletion(operation, this.config.animation.duration + TRANSITION_SLACK_MS);
+        this.frame = view!.requestAnimationFrame(() => {
+            if (this.activeOperation !== operation) return;
+            this.frame = null;
             this.moveTargets(operation);
         });
 
         return deferred.promise;
+    }
+
+    private scheduleCompletion(operation: Operation, delay: number): void {
+        if (this.timer !== null) window.clearTimeout(this.timer);
+        this.timer = window.setTimeout(() => this.cleanUp(operation), delay);
+    }
+
+    private cancelScheduledWork(): void {
+        if (this.frame !== null) this.dom.document!.defaultView!.cancelAnimationFrame(this.frame);
+        if (this.timer !== null) window.clearTimeout(this.timer);
+        this.frame = this.timer = null;
     }
 
     private createDeferred(): { resolve: (value: any) => void; reject: (reason?: any) => void; promise: Promise<any> } {
@@ -1078,7 +1109,7 @@ export class Mixer implements MixitupMixer {
     }
 
     private getStartMixData(operation: Operation): void {
-        const parentStyle = window.getComputedStyle(this.dom.parent!);
+        const parentStyle = this.dom.document!.defaultView!.getComputedStyle(this.dom.parent!);
         const parentRect = this.dom.parent!.getBoundingClientRect();
         const boxSizing = parentStyle.boxSizing;
 
@@ -1179,7 +1210,7 @@ export class Mixer implements MixitupMixer {
         let parentStyle: CSSStyleDeclaration | null = null;
 
         if (!this.incPadding) {
-            parentStyle = window.getComputedStyle(this.dom.parent!);
+            parentStyle = this.dom.document!.defaultView!.getComputedStyle(this.dom.parent!);
         }
 
         const parentRect = this.dom.parent!.getBoundingClientRect();
@@ -1383,7 +1414,7 @@ export class Mixer implements MixitupMixer {
             moveData.operation = operation;
             moveData.callback = willTransition ? checkProgress : null;
 
-            target.move(moveData);
+            target.applyStylesIn(moveData);
             moves.push([target, moveData]);
         }
 
@@ -1406,22 +1437,21 @@ export class Mixer implements MixitupMixer {
             moveData.operation = operation;
             moveData.callback = willTransition ? checkProgress : null;
 
-            target.move(moveData);
+            target.applyStylesIn(moveData);
             moves.push([target, moveData]);
         }
-
-        requestAnimationFrame(() => {
-            for (const [target, moveData] of moves) {
-                target.applyStylesOut(moveData);
-            }
-        });
 
         if (this.config.animation.animateResizeContainer) {
             this.dom.parent!.style.transition =
                 'height ' + this.config.animation.duration + 'ms ease, ' +
                 'width ' + this.config.animation.duration + 'ms ease ';
+        }
 
-            requestAnimationFrame(() => {
+        this.frame = this.dom.document!.defaultView!.requestAnimationFrame(() => {
+            if (this.activeOperation !== operation) return;
+            this.frame = null;
+
+            if (this.config.animation.animateResizeContainer) {
                 if (
                     operation.startHeight !== operation.newHeight &&
                     operation.viewportDeltaY !== operation.startHeight - operation.newHeight
@@ -1435,8 +1465,29 @@ export class Mixer implements MixitupMixer {
                 ) {
                     this.dom.parent!.style.width = operation.newWidth + 'px';
                 }
-            });
-        }
+            }
+
+            let longestTransition = 0;
+            try {
+                for (const [target, moveData] of moves) {
+                    if (!moveData.callback) continue;
+                    const delay = target.getDelay(moveData.staggerIndex);
+                    if (this.activeOperation !== operation) return;
+                    longestTransition = Math.max(longestTransition, target.applyStylesOut(moveData, delay));
+                }
+            } catch (err) {
+                if (this.activeOperation !== operation) return;
+                this.userDeferred!.reject(err);
+                this.cleanUp(operation, false);
+                return;
+            }
+
+            if (!this.targetsBound) {
+                this.cleanUp(operation);
+            } else {
+                this.scheduleCompletion(operation, longestTransition + TRANSITION_SLACK_MS);
+            }
+        });
 
         if (operation.willChangeLayout) {
             if (this.config.layout.containerClassName) this.dom.container!.classList.remove(this.config.layout.containerClassName);
@@ -1482,6 +1533,7 @@ export class Mixer implements MixitupMixer {
     }
 
     private checkProgress(_target?: unknown, operation?: unknown): void {
+        if (operation !== this.activeOperation) return;
         this.targetsDone++;
 
         if (this.targetsBound === this.targetsDone) {
@@ -1489,11 +1541,8 @@ export class Mixer implements MixitupMixer {
         }
     }
 
-    private cleanUp(operation: Operation): void {
-        this.targetsMoved =
-            this.targetsImmovable =
-            this.targetsBound =
-            this.targetsDone = 0;
+    private finishOperation(operation: Operation): void {
+        this.targetsBound = this.targetsDone = 0;
 
         for (const target of (operation.show as Target[])) {
             target.cleanUp();
@@ -1539,9 +1588,10 @@ export class Mixer implements MixitupMixer {
                 }
 
                 if (!operation.willSort) {
-                    this.dom.parent!.removeChild(target.dom.el!);
+                    target.dom.el!.remove();
                 }
 
+                target.unbindEvents();
                 target.isInDom = false;
 
                 return true;
@@ -1554,63 +1604,61 @@ export class Mixer implements MixitupMixer {
             this.targets = operation.newOrder as Target[];
         }
 
-        this.state = operation.newState;
+        this.state = operation.newState!;
         this.lastOperation = operation;
         this.dom.targets = this.state!.targets;
+    }
 
-        fire('mixEnd', this.dom.container!, {
-            state: this.state as MixitupState,
-            instance: this,
-        }, this.dom.document!);
+    private cleanUp(operation: Operation, notify = true): void {
+        if (this.activeOperation !== operation) return;
+        this.activeOperation = null;
+        this.cancelScheduledWork();
+        const deferred = this.userDeferred!;
+        try {
+            this.finishOperation(operation);
+            if (this.refreshPending && !this.destroyed) this.refreshTargets();
+            const state = this.state!;
 
-        if (typeof this.config.callbacks.onMixEnd === 'function') {
-            this.config.callbacks.onMixEnd.call(this.dom.container, this.state as MixitupState, this);
-        }
+            if (notify && !this.destroyed) {
+                fire('mixEnd', this.dom.container!, { state, instance: this }, this.dom.document!);
+                if (!this.destroyed) this.config.callbacks.onMixEnd?.call(this.dom.container, state, this);
 
-        if (operation.hasFailed) {
-            fire('mixFail', this.dom.container!, {
-                state: this.state as MixitupState,
-                instance: this,
-            }, this.dom.document!);
+                if (state.hasFailed && !this.destroyed) {
+                    this.dom.container!.classList.add(
+                        getClassname(this.config.classNames, 'container', this.config.classNames.modifierFailed)
+                    );
+                    fire('mixFail', this.dom.container!, { state, instance: this }, this.dom.document!);
+                    if (!this.destroyed) this.config.callbacks.onMixFail?.call(this.dom.container, state, this);
+                }
 
-            if (typeof this.config.callbacks.onMixFail === 'function') {
-                this.config.callbacks.onMixFail.call(this.dom.container, this.state as MixitupState, this);
+                if (!this.destroyed) this.userCallback?.call(this.dom.container, state, this);
             }
-
-            this.dom.container!.classList.add(
-                getClassname(this.config.classNames, 'container', this.config.classNames.modifierFailed)
-            );
+            deferred.resolve(state);
+        } catch (err) {
+            deferred.reject(err);
+        } finally {
+            this.userCallback = null;
+            this.userDeferred = null;
+            this.isBusy = false;
+            this.drainQueue();
         }
+    }
 
-        if (typeof this.userCallback === 'function') {
-            this.userCallback.call(this.dom.container, this.state, this);
-        }
+    private drainQueue(): void {
+        while (!this.destroyed && !this.isBusy && this.queue.length) {
+            const next = this.queue.shift()!;
+            this.userDeferred = next.deferred;
 
-        if (this.userDeferred && typeof this.userDeferred.resolve === 'function') {
-            this.userDeferred.resolve(this.state);
-        }
-
-        this.userCallback = null;
-        this.userDeferred = null;
-        this.lastClicked = null;
-        this.isToggling = false;
-        this.isBusy = false;
-
-        if (this.queue.length) {
-            const nextInQueue = this.queue.shift()!;
-
-            this.userDeferred = nextInQueue.deferred;
-            this.isToggling = nextInQueue.isToggling;
-            this.lastClicked = nextInQueue.triggerElement;
-
-            if (
-                nextInQueue.instruction &&
-                nextInQueue.instruction.command &&
-                (nextInQueue.instruction.command as any).filter !== undefined
-            ) {
-                this.multimix(...(nextInQueue.args as [any]));
-            } else {
-                this.dataset(...(nextInQueue.args as [any]));
+            try {
+                if ('dataset' in next.instruction!.command) {
+                    this.dataset(...next.args);
+                } else {
+                    this.runMultimix(next.args, next.triggerElement, next.isToggling);
+                }
+            } catch (err) {
+                next.deferred!.reject(err);
+                this.userDeferred = null;
+                this.userCallback = null;
             }
         }
     }
@@ -1643,11 +1691,11 @@ export class Mixer implements MixitupMixer {
             cmd.remove = this.parseRemoveArgs([cmd.remove]).command;
         }
 
-        if (cmd.filter && typeof cmd.filter !== 'object') {
+        if (cmd.filter != null && (typeof cmd.filter === 'string' || isElement(cmd.filter, this.dom.document!) || typeof cmd.filter.length === 'number')) {
             cmd.filter = this.parseFilterArgs([cmd.filter]).command;
         }
 
-        if (cmd.sort && typeof cmd.sort !== 'object') {
+        if (cmd.sort != null && (typeof cmd.sort === 'string' || typeof cmd.sort.length === 'number')) {
             cmd.sort = this.parseSortArgs([cmd.sort]).command;
         }
 
@@ -1711,7 +1759,7 @@ export class Mixer implements MixitupMixer {
                     sortString = arg;
                     break;
                 case 'object':
-                    if (arg.length) {
+                    if (typeof arg.length === 'number') {
                         (instruction.command as CommandSort).collection = Array.from(arg);
                     }
                     break;
@@ -1749,7 +1797,7 @@ export class Mixer implements MixitupMixer {
             } else if (typeof arg === 'string' && ['before', 'after'].indexOf(arg) > -1) {
                 cmd.position = arg as 'before' | 'after';
             } else if (typeof arg === 'string') {
-                cmd.collection = Array.from(createElement(arg).childNodes) as Element[];
+                cmd.collection = Array.from(createElement(arg, this.dom.document!).childNodes) as Element[];
             } else if (typeof arg === 'object' && isElement(arg, this.dom.document!)) {
                 if (!cmd.collection.length) {
                     cmd.collection = [arg];
@@ -1917,7 +1965,7 @@ export class Mixer implements MixitupMixer {
             this.queue.push(queueItem);
 
             if (this.config.controls.enable) {
-                if (this.isToggling) {
+                if (queueItem.isToggling) {
                     this.buildToggleArray(queueItem.instruction!.command);
 
                     const toggleSelector = this.getToggleSelector();
@@ -1967,7 +2015,7 @@ export class Mixer implements MixitupMixer {
         operation.startOrder = this.targets as any;
         operation.newOrder = operation.show;
 
-        if (this.config.animation.enable) {
+        if (this.config.animation.enable && this.dom.document!.defaultView) {
             this.getStartMixData(operation);
             this.setInter(operation);
 
@@ -1997,26 +2045,26 @@ export class Mixer implements MixitupMixer {
         const persistantStartIds: string[] = [];
         const persistantNewIds: string[] = [];
         const insertedTargets: Target[] = [];
-        const uids: Record<string, boolean> = {};
+        const uids = new Set<string>();
         let frag: DocumentFragment | null = null;
         let nextEl: Element | null = null;
 
         for (const data of operation.newDataset!) {
-            const id = data[this.config.data.uidKey] as string;
+            const uid = data[this.config.data.uidKey];
 
-            if (typeof id === 'undefined' || id.toString().length < 1) {
+            if (uid == null || String(uid).length < 1) {
                 throw new TypeError((messages.errorDatasetInvalidUidKey as Function)({
                     uidKey: this.config.data.uidKey,
                 }));
             }
 
-            if (!uids[id]) {
-                uids[id] = true;
-            } else {
+            const id = String(uid);
+            if (uids.has(id)) {
                 throw new Error((messages.errorDatasetDuplicateUid as Function)({
                     uid: id,
                 }));
             }
+            uids.add(id);
 
             let target = this.cache[id];
 
@@ -2097,7 +2145,7 @@ export class Mixer implements MixitupMixer {
         const shown = new Set(operation.show as Target[]);
 
         for (const data of operation.startDataset!) {
-            const id = data[this.config.data.uidKey] as string;
+            const id = String(data[this.config.data.uidKey]);
             const target = this.cache[id];
 
             if (!shown.has(target)) {
@@ -2175,39 +2223,29 @@ export class Mixer implements MixitupMixer {
         }, instruction.animate, instruction.callback);
     }
 
-    toggleOn(...args: any[]): Promise<MixitupState> {
-        const instruction = this.parseFilterArgs(args);
-        const selector = (instruction.command as CommandFilter).selector;
-
-        this.isToggling = true;
-
-        if (this.toggleArray.indexOf(selector) < 0) {
-            this.toggleArray.push(selector);
-        }
-
-        const toggleSelector = this.getToggleSelector();
-
-        return this.multimix({
-            filter: toggleSelector as any,
-        }, instruction.animate, instruction.callback);
+    toggleOn(...args: unknown[]): Promise<MixitupState> {
+        return this.toggle(args, true, null);
     }
 
-    toggleOff(...args: any[]): Promise<MixitupState> {
+    toggleOff(...args: unknown[]): Promise<MixitupState> {
+        return this.toggle(args, false, null);
+    }
+
+    private toggle(args: unknown[], on: boolean, triggerElement: Element | null): Promise<MixitupState> {
         const instruction = this.parseFilterArgs(args);
         const selector = (instruction.command as CommandFilter).selector;
-        const selectorIndex = this.toggleArray.indexOf(selector);
+        const i = this.toggleArray.indexOf(selector);
 
-        this.isToggling = true;
+        if (on && i < 0) this.toggleArray.push(selector);
+        if (!on && i > -1) this.toggleArray.splice(i, 1);
 
-        if (selectorIndex > -1) {
-            this.toggleArray.splice(selectorIndex, 1);
-        }
+        return this.runMultimix([{ filter: this.getToggleSelector() }, instruction.animate, instruction.callback], triggerElement, true);
+    }
 
-        const toggleSelector = this.getToggleSelector();
-
-        return this.multimix({
-            filter: toggleSelector as any,
-        }, instruction.animate, instruction.callback);
+    mixControl(command: Record<string, unknown>, button: Element, toggleOn?: boolean): Promise<MixitupState> {
+        return toggleOn === undefined
+            ? this.runMultimix([command], button, false)
+            : this.toggle([command.filter], toggleOn, button);
     }
 
     sort(...args: any[]): Promise<MixitupState> {
@@ -2227,17 +2265,22 @@ export class Mixer implements MixitupMixer {
     }
 
     multimix(...args: any[]): Promise<MixitupState> {
+        return this.runMultimix(args, null, false);
+    }
+
+    private runMultimix(args: unknown[], triggerElement: Element | null, isToggling: boolean): Promise<MixitupState> {
+        if (this.destroyed) return Promise.resolve(this.state!);
         const instruction = this.parseMultimixArgs(args);
 
         if (!this.isBusy) {
-            const operation = this.getOperation(instruction.command as Partial<CommandMultimix>);
+            const operation = this.getOperation(instruction.command as Partial<CommandMultimix>, triggerElement);
 
             if (!operation) {
                 return Promise.resolve(this.state as MixitupState);
             }
 
             if (this.config.controls.enable) {
-                if ((instruction.command as any).filter && !this.isToggling) {
+                if (instruction.command.filter && !isToggling) {
                     this.toggleArray.length = 0;
                     this.buildToggleArray(operation.command);
                 }
@@ -2249,36 +2292,28 @@ export class Mixer implements MixitupMixer {
 
             if (instruction.callback) this.userCallback = instruction.callback;
 
-            const animate = (instruction.animate as any ^ this.config.animation.enable as any)
-                ? instruction.animate
-                : this.config.animation.enable;
-
-            return this.goMix(animate, operation);
+            return this.goMix(instruction.animate, operation);
         } else {
             const queueItem = createQueueItem();
 
             queueItem.args = args;
             queueItem.instruction = instruction;
-            queueItem.triggerElement = this.lastClicked;
-            queueItem.isToggling = this.isToggling;
+            queueItem.triggerElement = triggerElement;
+            queueItem.isToggling = isToggling;
 
             return this.queueMix(queueItem);
         }
     }
 
     dataset(...args: any[]): Promise<MixitupState> {
+        if (this.destroyed) return Promise.resolve(this.state!);
         const instruction = this.parseDatasetArgs(args);
 
         if (!this.isBusy) {
-            if (instruction.callback) this.userCallback = instruction.callback;
-
-            const animate = (instruction.animate as any ^ this.config.animation.enable as any)
-                ? instruction.animate
-                : this.config.animation.enable;
-
             const operation = this.getDataOperation((instruction.command as CommandDataset).dataset!);
 
-            return this.goMix(animate, operation);
+            if (instruction.callback) this.userCallback = instruction.callback;
+            return this.goMix(instruction.animate, operation);
         } else {
             const queueItem = createQueueItem();
 
@@ -2289,7 +2324,7 @@ export class Mixer implements MixitupMixer {
         }
     }
 
-    getOperation(multimixCommand: Partial<CommandMultimix>): Operation | null {
+    getOperation(multimixCommand: Partial<CommandMultimix>, triggerElement: Element | null = null): Operation | null {
         const sortCommand = multimixCommand.sort;
         const filterCommand = multimixCommand.filter;
         const changeLayoutCommand = multimixCommand.changeLayout;
@@ -2300,7 +2335,7 @@ export class Mixer implements MixitupMixer {
         operation.id = randomHex();
         operation.command = multimixCommand as CommandMultimix;
         operation.startState = this.state;
-        operation.triggerElement = this.lastClicked;
+        operation.triggerElement = triggerElement;
 
         if (this.isBusy) {
             if (this.config.debug.showWarnings) {
@@ -2359,7 +2394,7 @@ export class Mixer implements MixitupMixer {
             operation.newContainerClassName = operation.startContainerClassName;
         }
 
-        if (this.config.animation.enable) {
+        if (this.config.animation.enable && this.dom.document!.defaultView) {
             this.getStartMixData(operation);
             this.setInter(operation);
 
@@ -2467,6 +2502,8 @@ export class Mixer implements MixitupMixer {
         }, parsed.animate, parsed.callback);
     }
 
+    getConfig(): MixitupConfig;
+    getConfig(stringKey: string): unknown;
     getConfig(stringKey?: string): MixitupConfig | unknown {
         if (!stringKey) {
             return this.config;
@@ -2475,7 +2512,7 @@ export class Mixer implements MixitupMixer {
         return getProperty(this.config, stringKey);
     }
 
-    configure(config: Partial<MixitupConfig>): void {
+    configure(config: MixitupOptions): void {
         extend(this.config as any, config as any, true, true);
     }
 
@@ -2488,7 +2525,95 @@ export class Mixer implements MixitupMixer {
     }
 
     forceRefresh(): void {
-        this.indexTargets();
+        if (this.destroyed) return;
+        if (this.activeOperation) {
+            this.refreshPending = true;
+            return;
+        }
+        this.refreshTargets();
+    }
+
+    private refreshTargets(): void {
+        this.refreshPending = false;
+        const state = this.state!;
+        const elements = this.findTargets();
+        const dataset = state.activeDataset && this.matchRefreshDataset(elements, state.activeDataset);
+        const previousOrder = this.origOrder;
+        this.indexTargets(elements, dataset);
+
+        const operation = createOperation();
+        operation.newOrder = this.targets;
+        operation.newContainerClassName = state.activeContainerClassName;
+        operation.newDataset = dataset;
+        operation.newSort = state.activeSort;
+        operation.newFilter = state.activeFilter;
+
+        const sort = operation.newSort;
+        if (sort && (sort.attribute || sort.collection || sort.order !== 'asc')) {
+            // Keep "default" meaningful after refreshing an already sorted grid.
+            const remaining = new Map(this.targets.map(target => [target.dom.el!, target]));
+            this.origOrder = [];
+            for (const target of previousOrder) {
+                const replacement = remaining.get(target.dom.el!);
+                if (replacement) {
+                    this.origOrder.push(replacement);
+                    remaining.delete(target.dom.el!);
+                }
+            }
+            for (const target of remaining.values()) this.origOrder.push(target);
+
+            if (sort.collection) {
+                const live = new Set(elements);
+                const collection = sort.collection.filter(el => live.delete(el));
+                for (const el of live) collection.push(el);
+                operation.newSort = { ...sort, collection };
+            }
+            if (sort.order !== 'random') {
+                operation.willSort = true;
+                this.sortOperation(operation);
+                if (operation.willSort) this.printSort(false, operation);
+                this.targets = operation.newOrder;
+            }
+        }
+
+        if (operation.newFilter) {
+            this.filterOperation(operation);
+            for (const target of operation.toShow as Target[]) target.show();
+            for (const target of operation.toHide as Target[]) target.hide();
+        } else {
+            operation.show = this.targets.slice();
+            for (const target of this.targets) target.show();
+        }
+
+        this.state = this.buildState(operation);
+        this.dom.targets = this.state.targets;
+        this.lastOperation = operation;
+        this.dom.container!.classList.toggle(
+            getClassname(this.config.classNames, 'container', this.config.classNames.modifierFailed),
+            operation.hasFailed
+        );
+    }
+
+    private matchRefreshDataset(elements: Element[], dataset: NonNullable<MixitupState['activeDataset']>) {
+        const dataByElement = new Map(dataset.map(item => [
+            this.cache[String(item[this.config.data.uidKey])].dom.el!,
+            item,
+        ]));
+        const unmatched = new Set(dataByElement.keys());
+        for (const el of elements) unmatched.delete(el);
+        const missing = unmatched.values();
+
+        // Retain data by element identity across moves and removals. Replacement
+        // markup receives the missing records in order, as for pre-rendered data.
+        return elements.map(el => {
+            const known = dataByElement.get(el);
+            if (known) return known;
+            const next = missing.next();
+            if (elements.length !== dataset.length || next.done) {
+                throw new Error((messages.errorDatasetPrerenderedMismatch as Function)());
+            }
+            return dataByElement.get(next.value)!;
+        });
     }
 
     forceRender(): void {
@@ -2518,9 +2643,21 @@ export class Mixer implements MixitupMixer {
     }
 
     destroy(cleanUp: boolean = false): void {
+        if (this.destroyed) return;
+        this.destroyed = true;
+        if (this.activeOperation) this.cleanUp(this.activeOperation, false);
+
+        for (const item of this.queue) item.deferred!.resolve(this.state);
+        this.queue.length = 0;
+        this.userDeferred?.resolve(this.state);
+        this.userDeferred = null;
+        this.userCallback = null;
+        this.isBusy = false;
+
         for (const control of this.controls) {
             control.removeBinding(this);
         }
+        this.controls.length = 0;
 
         for (const target of this.targets) {
             if (cleanUp) {
@@ -2530,10 +2667,16 @@ export class Mixer implements MixitupMixer {
             target.unbindEvents();
         }
 
+        const container = this.dom.container!;
+        if (this.state?.activeContainerClassName) container.classList.remove(this.state.activeContainerClassName);
+        if (this.config.layout.containerClassName) container.classList.remove(this.config.layout.containerClassName);
+        container.classList.remove(getClassname(this.config.classNames, 'container', this.config.classNames.modifierFailed));
+        this.cache = Object.create(null);
+
         if (this.dom.container!.id.match(/^MixItUp/)) {
             this.dom.container!.removeAttribute('id');
         }
 
-        instances.delete(this.id);
+        unregisterInstance(container);
     }
 }

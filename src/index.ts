@@ -1,13 +1,14 @@
-import type { MixitupConfig } from './types/config';
+import type { MixitupOptions } from './types/config';
 import type { MixitupMixer } from './types/public-api';
 
-import { Mixer, instances } from './mixer';
+import { Mixer } from './mixer';
+import { instances, registerInstance } from './instances';
 import { Collection } from './collection';
 import { messages } from './messages';
 import { isElement, randomHex, template } from './helpers';
 
 // Re-export public types for consumer use
-export type { MixitupConfig } from './types/config';
+export type { MixitupConfig, MixitupOptions } from './types/config';
 export type {
     ConfigAnimation,
     ConfigBehavior,
@@ -23,7 +24,7 @@ export type {
     ConfigTemplates,
 } from './types/config';
 export type { MixitupState } from './types/state';
-export type { MixitupMixer } from './types/public-api';
+export type { MixitupMixer, MixitupCommand } from './types/public-api';
 export type {
     CommandFilter,
     CommandSort,
@@ -79,24 +80,14 @@ function createFacade(mixer: Mixer): MixitupMixer {
  * @returns A "mixer" object holding the MixItUp instance.
  */
 function mixitup(
-    container: Element | string,
-    config?: Partial<MixitupConfig>,
+    container: Element | string | ArrayLike<Element>,
+    config?: MixitupOptions,
     foreignDoc?: Document,
 ): MixitupMixer;
 
-/**
- * Internal overload for multi-element initialization via Collection.
- */
 function mixitup(
     container: Element | string | ArrayLike<Element>,
-    config?: Partial<MixitupConfig>,
-    foreignDoc?: Document,
-    returnCollection?: boolean,
-): MixitupMixer | Collection;
-
-function mixitup(
-    container: Element | string | ArrayLike<Element>,
-    config?: Partial<MixitupConfig>,
+    config?: MixitupOptions,
     foreignDoc?: Document,
     returnCollection?: boolean,
 ): MixitupMixer | Collection {
@@ -134,36 +125,23 @@ function mixitup(
             id = el.id;
         }
 
-        let instance: Mixer;
-        let facade: MixitupMixer;
+        let instance = instances.get(el);
 
-        const cached = instances.get(id);
-
-        // A container with the same ID that has since been removed from the document
-        // (e.g. replaced by a page transition) was never destroyed, so replace it.
-        if (cached && cached.dom.container !== el && !cached.dom.container!.isConnected) {
-            cached.destroy();
-        }
-
-        if (instances.has(id)) {
-            instance = instances.get(id)!;
-
+        if (instance) {
             if (!config || (config && config.debug && config.debug.showWarnings !== false)) {
                 console.warn((messages.warningFactoryPreexistingInstance as () => string)());
             }
         } else {
             instance = new Mixer();
 
-            instance.attach(el, doc, id, config);
-
-            instances.set(id, instance);
+            instance.attach(el, foreignDoc || el.ownerDocument, id, config);
+            registerInstance(el, instance);
         }
 
         if (config && config.debug && config.debug.enable) {
             mixerInstances.push(instance);
         } else {
-            facade = createFacade(instance);
-            mixerInstances.push(facade);
+            mixerInstances.push(createFacade(instance));
         }
     }
 

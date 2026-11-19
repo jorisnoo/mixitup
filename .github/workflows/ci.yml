@@ -17,21 +17,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v6.5.0
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
-
-      - name: Build
-        run: npm run build
+      - name: Audit, build, type-check consumers, and test
+        run: npm run check
 
       - name: Check dist is up to date
         run: |

@@ -1,10 +1,10 @@
 # Filtering with MixItUp
 
-> Filtering allows us to show a subset of target elements in a MixItUp container. This tutorial will discuss the various filtering techniques available in MixItUp 3.
+> Filtering shows a subset of the target elements in a MixItUp container.
 
 ## Control Buttons
 
-Control buttons provide an easy way of building filtering UI, and allow basic filtering via DOM selector querying. MixItUp 3 offers two types of filter-based controls: **filters** and **toggles**.
+MixItUp offers two types of selector-based controls: **filters** and **toggles**.
 
 ### Filter Controls
 
@@ -24,11 +24,11 @@ Filter controls are queried by MixItUp on instantiation based on the presence of
 
 The following demo shows basic filtering functionality via filter control buttons:
 
-- [Demo: Basic Filtering](https://patrickkunka.github.io/mixitup/demos/basic/)
+- [Demo: Basic Filtering](../demos/basic/index.html)
 
 ### Toggle Controls
 
-New to MixItUp 3, toggle controls are a means of combining multiple selectors. When a toggle control is clicked and becomes active, it stays active until it is clicked again and "toggled off". Multiple toggle controls may therefore be active simultaneously.
+Toggle controls combine selectors. Each control stays active until clicked a second time, so multiple toggles may be active simultaneously.
 
 Toggle controls are queried based on the presence of a `data-toggle` attribute in their markup. The value of this attribute defines the control's filtering action, which must be a valid selector.
 
@@ -56,7 +56,7 @@ Using the configuration object, we can customize several aspects of the behavior
 
 ### `controls.toggleDefault`
 
-New to MixItUp 3 is the `controls.toggleDefault` configuration option. This can be used to define the "default" state of the mixer when all toggles are deactivated. While we might expect that deactivating all toggles should result in an empty selector (e.g. `''` - equivalent to `'none'`), this can be counter-intuitive to users as a toggle-based UI is typically used to "drill-down" into an initial full set of content, returning to that full set when toggles are removed. Therefore, the `controls.toggleDefault` is set to `'all'` by default, but can be set to `'none'` if appropriate.
+`controls.toggleDefault` sets what happens when all toggles are off: show `'all'` targets (the default), or show `'none'`.
 
 #### Example: Setting the default toggle state to 'none'
 
@@ -124,11 +124,11 @@ Now that we understand compound selectors, we can understand how the `controls.t
 
 The following demo shows toggle UI using "or" logic:
 
-- [Demo: Toggle Filtering with OR Logic](https://patrickkunka.github.io/mixitup/demos/toggle-filtering-or-logic/)
+- [Demo: Toggle Filtering with OR Logic](../demos/toggle-filtering-or-logic/index.html)
 
 This next demo shows toggle UI using "and" logic. Note that several of the targets have multiple categories as "and" logic is really only useful scenarios where we want eliminate targets that **don't match all criteria**.
 
-- [Demo: Toggle Filtering with AND Logic](https://patrickkunka.github.io/mixitup/demos/toggle-filtering-and-logic/)
+- [Demo: Toggle Filtering with AND Logic](../demos/toggle-filtering-and-logic/index.html)
 
 ## Multidimensional Filtering
 
@@ -138,11 +138,13 @@ For example, imagine a clothing store where we want to filter products by type, 
 
 > Show (shirts OR sweaters) AND (red OR blue) AND large
 
-This is where MixItUp's **"MultiFilter"** extension comes in. It allows us to combine groups of filters, each one representing a particular dimension, using one type of logic within a group and another type of logic between groups. In the example above, we can see that we need "or" logic within each group, and "and" logic between groups. The resulting selector would look like this:
+Use a selector that combines those conditions. For example, given product elements with classes for type, color and size:
 
-The algorithm required to construct these kinds of selectors (with any number of groups using any combination of logic) is not trivial. Due to the complexity and specific nature of this functionality, it is available as am extension rather than part of the MixItUp core.
+```js
+mixer.filter(':is(.shirt, .sweater):is(.red, .blue).large');
+```
 
-Check out the [MixItUp MultiFilter](https://github.com/patrickkunka/mixitup-multifilter) repository for more information, demos, and full documentation.
+Your application decides how to combine the selected options. You can also pass a filtered array of elements, as in the [range filtering demo](../demos/filtering-by-range/index.html). The upstream v3 MultiFilter extension is not compatible with this fork.
 
 ## API Filtering
 
@@ -184,4 +186,4 @@ mixer.filter(filtered)
 
 ## Dataset API
 
-All of the above techniques use either the DOM selector API or some form of interaction with the DOM. If you're building a modern JavaScript application with a data model, you may wish to use MixItUp 3's [Dataset API](./using-the-dataset-api.md) which allows us to bypass the DOM entirely and interact with MixItUp purely via changes to your model.
+If your application already has a data model, the [Dataset API](./using-the-dataset-api.md) lets you filter that data and pass the resulting items to MixItUp instead of querying the DOM.

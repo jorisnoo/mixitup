@@ -173,17 +173,18 @@ declare class Control {
 
 declare type ControlStatus = 'inactive' | 'active' | 'disabled' | 'live';
 
-/**
- * Returns the current document scroll and viewport state.
- */
-declare function getDocumentState(doc?: Document): {
+declare interface DocumentState {
     scrollTop: number;
     scrollLeft: number;
     docHeight: number;
     docWidth: number;
     viewportHeight: number;
     viewportWidth: number;
-};
+}
+
+declare type Elements = Element | ArrayLike<Element>;
+
+declare type Filter = string | Elements;
 
 declare interface IMoveData {
     posIn: StyleData | null;
@@ -196,25 +197,31 @@ declare interface IMoveData {
     tweenData: Record<string, any>;
 }
 
+declare type InsertContent = Elements | DocumentFragment | string;
+
 declare interface Messages {
     [key: string]: string | ((...args: any[]) => string);
 }
 
 export declare const messages: Messages;
 
+declare type MixCallback = (this: Element, state: MixitupState, mixer: MixitupMixer) => void;
+
 export declare class Mixer implements MixitupMixer {
     config: MixitupConfig;
     id: string;
     isBusy: boolean;
-    isToggling: boolean;
+    private destroyed;
+    private activeOperation;
+    private frame;
+    private timer;
+    private refreshPending;
     incPadding: boolean;
     controls: Control[];
     targets: Target[];
     origOrder: Target[];
     cache: Record<string, Target>;
     toggleArray: string[];
-    targetsMoved: number;
-    targetsImmovable: number;
     targetsBound: number;
     targetsDone: number;
     staggerDuration: number;
@@ -225,7 +232,6 @@ export declare class Mixer implements MixitupMixer {
     queue: QueueItem[];
     state: MixitupState | null;
     lastOperation: Operation | null;
-    lastClicked: Element | null;
     userCallback: ((...args: any[]) => void) | null;
     userDeferred: {
         resolve: (value: any) => void;
@@ -233,10 +239,11 @@ export declare class Mixer implements MixitupMixer {
         promise: Promise<any>;
     } | null;
     dom: MixerDom;
-    attach(container: HTMLElement, doc: Document, id: string, config?: Partial<MixitupConfig>): void;
+    attach(container: HTMLElement, doc: Document, id: string, config?: MixitupOptions): void;
     private sanitizeConfig;
     private getInitialState;
     private cacheDom;
+    private findTargets;
     private indexTargets;
     private initControls;
     private getControl;
@@ -262,6 +269,8 @@ export declare class Mixer implements MixitupMixer {
     private buildState;
     private createMutableState;
     private goMix;
+    private scheduleCompletion;
+    private cancelScheduledWork;
     private createDeferred;
     private getStartMixData;
     private setInter;
@@ -273,7 +282,9 @@ export declare class Mixer implements MixitupMixer {
     private hasEffect;
     private willTransition;
     private checkProgress;
+    private finishOperation;
     private cleanUp;
+    private drainQueue;
     private parseMultimixArgs;
     private parseFilterArgs;
     private parseSortArgs;
@@ -290,13 +301,16 @@ export declare class Mixer implements MixitupMixer {
     hide(): Promise<MixitupState>;
     isMixing(): boolean;
     filter(...args: any[]): Promise<MixitupState>;
-    toggleOn(...args: any[]): Promise<MixitupState>;
-    toggleOff(...args: any[]): Promise<MixitupState>;
+    toggleOn(...args: unknown[]): Promise<MixitupState>;
+    toggleOff(...args: unknown[]): Promise<MixitupState>;
+    private toggle;
+    mixControl(command: Record<string, unknown>, button: Element, toggleOn?: boolean): Promise<MixitupState>;
     sort(...args: any[]): Promise<MixitupState>;
     changeLayout(...args: any[]): Promise<MixitupState>;
     multimix(...args: any[]): Promise<MixitupState>;
+    private runMultimix;
     dataset(...args: any[]): Promise<MixitupState>;
-    getOperation(multimixCommand: Partial<CommandMultimix>): Operation | null;
+    getOperation(multimixCommand: Partial<CommandMultimix>, triggerElement?: Element | null): Operation | null;
     tween(operation: any, multiplier: number): void;
     insert(...args: any[]): Promise<MixitupState>;
     insertBefore(...args: any[]): Promise<MixitupState>;
@@ -304,10 +318,13 @@ export declare class Mixer implements MixitupMixer {
     prepend(...args: any[]): Promise<MixitupState>;
     append(...args: any[]): Promise<MixitupState>;
     remove(...args: any[]): Promise<MixitupState>;
-    getConfig(stringKey?: string): MixitupConfig | unknown;
-    configure(config: Partial<MixitupConfig>): void;
+    getConfig(): MixitupConfig;
+    getConfig(stringKey: string): unknown;
+    configure(config: MixitupOptions): void;
     getState(): MixitupState;
     forceRefresh(): void;
+    private refreshTargets;
+    private matchRefreshDataset;
     forceRender(): void;
     destroy(cleanUp?: boolean): void;
 }
@@ -329,13 +346,18 @@ declare interface MixerDom {
  * @param foreignDoc - An optional reference to a `document`, which can be used to control a MixItUp instance in an iframe.
  * @returns A "mixer" object holding the MixItUp instance.
  */
-declare function mixitup(container: Element | string, config?: Partial<MixitupConfig>, foreignDoc?: Document): MixitupMixer;
-
-/**
- * Internal overload for multi-element initialization via Collection.
- */
-declare function mixitup(container: Element | string | ArrayLike<Element>, config?: Partial<MixitupConfig>, foreignDoc?: Document, returnCollection?: boolean): MixitupMixer | Collection;
+declare function mixitup(container: Element | string | ArrayLike<Element>, config?: MixitupOptions, foreignDoc?: Document): MixitupMixer;
 export default mixitup;
+
+export declare interface MixitupCommand {
+    filter?: Filter | CommandFilter | null;
+    sort?: Sort | CommandSort | null;
+    insert?: Partial<CommandInsert> | null;
+    remove?: CommandRemove | Elements | null;
+    changeLayout?: string | {
+        containerClassName: string;
+    } | null;
+}
 
 export declare interface MixitupConfig {
     animation: ConfigAnimation;
@@ -353,31 +375,38 @@ export declare interface MixitupConfig {
 }
 
 export declare interface MixitupMixer {
-    configure(config: Partial<MixitupConfig>): void;
+    configure(config: MixitupOptions): void;
     show(): Promise<MixitupState>;
     hide(): Promise<MixitupState>;
-    filter(selector: string | Element[]): Promise<MixitupState>;
-    toggleOn(selector: string): Promise<MixitupState>;
-    toggleOff(selector: string): Promise<MixitupState>;
-    sort(sortString: string): Promise<MixitupState>;
-    changeLayout(containerClassName: string): Promise<MixitupState>;
-    multimix(command: Partial<CommandMultimix>): Promise<MixitupState>;
-    dataset(dataset: Array<Record<string, unknown>>): Promise<MixitupState>;
-    tween(operation: unknown, multiplier: number): void;
-    insert(elements: Element | Element[], index?: number): Promise<MixitupState>;
-    insertBefore(elements: Element | Element[], referenceElement: Element): Promise<MixitupState>;
-    insertAfter(elements: Element | Element[], referenceElement: Element): Promise<MixitupState>;
-    prepend(elements: Element | Element[]): Promise<MixitupState>;
-    append(elements: Element | Element[]): Promise<MixitupState>;
-    remove(elements: Element | Element[] | string): Promise<MixitupState>;
-    destroy(hideTargets?: boolean): void;
+    filter(selector: Filter, ...options: MixOptions): Promise<MixitupState>;
+    toggleOn(selector: string, ...options: MixOptions): Promise<MixitupState>;
+    toggleOff(selector: string, ...options: MixOptions): Promise<MixitupState>;
+    sort(order: Sort, ...options: MixOptions): Promise<MixitupState>;
+    changeLayout(containerClassName: string, ...options: MixOptions): Promise<MixitupState>;
+    multimix(command: MixitupCommand, ...options: MixOptions): Promise<MixitupState>;
+    dataset(dataset: Array<Record<string, unknown>>, ...options: MixOptions): Promise<MixitupState>;
+    tween(operation: Operation, multiplier: number): void;
+    insert(elements: InsertContent, ...options: MixOptions): Promise<MixitupState>;
+    insert(elements: InsertContent, index: number, ...options: MixOptions): Promise<MixitupState>;
+    insertBefore(elements: InsertContent, referenceElement: Element, ...options: MixOptions): Promise<MixitupState>;
+    insertAfter(elements: InsertContent, referenceElement: Element, ...options: MixOptions): Promise<MixitupState>;
+    prepend(elements: InsertContent, ...options: MixOptions): Promise<MixitupState>;
+    append(elements: InsertContent, ...options: MixOptions): Promise<MixitupState>;
+    remove(elements: Elements | string | number, ...options: MixOptions): Promise<MixitupState>;
+    destroy(cleanUp?: boolean): void;
     forceRefresh(): void;
     forceRender(): void;
     isMixing(): boolean;
-    getOperation(command: Partial<CommandMultimix>): unknown;
-    getConfig(path?: string): MixitupConfig | unknown;
+    getOperation(command: Partial<CommandMultimix>): Operation | null;
+    getConfig(): MixitupConfig;
+    getConfig(path: string): unknown;
     getState(): MixitupState;
 }
+
+/** Configuration accepted by the factory and configure(); omitted settings retain their values. */
+export declare type MixitupOptions = {
+    [Group in keyof MixitupConfig]?: Partial<MixitupConfig[Group]>;
+};
 
 export declare interface MixitupState {
     readonly id: string;
@@ -398,6 +427,8 @@ export declare interface MixitupState {
     readonly activeDataset: Array<Record<string, unknown>> | null;
 }
 
+declare type MixOptions = [animate?: boolean, callback?: MixCallback] | [callback: MixCallback];
+
 declare interface Operation {
     id: string;
     args: any[];
@@ -406,7 +437,7 @@ declare interface Operation {
     toHidePosData: any[];
     startState: MixitupState | null;
     newState: MixitupState | null;
-    docState: ReturnType<getDocumentState> | null;
+    docState: DocumentState | null;
     willSort: boolean;
     willChangeLayout: boolean;
     hasEffect: boolean;
@@ -455,6 +486,8 @@ declare interface QueueItem {
     isToggling: boolean;
 }
 
+declare type Sort = string | ArrayLike<Element>;
+
 declare interface StyleData {
     x: number;
     y: number;
@@ -483,7 +516,6 @@ declare class Target {
     callback: ((target: Target, operation: Operation) => void) | null;
     isShown: boolean;
     isBound: boolean;
-    isExcluded: boolean;
     isInDom: boolean;
     handler: ((e: Event) => void) | null;
     operation: Operation | null;
@@ -495,15 +527,10 @@ declare class Target {
     getSortString(attributeName: string): void;
     show(): void;
     hide(): void;
-    /**
-     * Applies the starting styles of a move. The mixer applies the end styles
-     * (`applyStylesOut`) for all moved targets in a single animation frame.
-     */
-    move(moveData: IMoveData): void;
     applyTween(posData: IMoveData, multiplier: number): void;
     applyStylesIn(moveData: IMoveData): void;
-    applyStylesOut(moveData: IMoveData): void;
-    writeTransitionRule(property: string, staggerIndex: number, duration?: number): string;
+    applyStylesOut(moveData: IMoveData, delay: number): number;
+    private writeTransitionRule;
     getDelay(index: number): number;
     applyTransition(rules: string[]): void;
     handleTransitionEnd(e: TransitionEvent): void;

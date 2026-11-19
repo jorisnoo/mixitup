@@ -1,3 +1,4 @@
+import type { DocumentState } from './helpers';
 import type { CommandMultimix } from './types/commands';
 import type { CommandFilter, CommandSort } from './types/commands';
 import type { MixitupState } from './types/state';
@@ -11,7 +12,7 @@ export interface Operation {
     toHidePosData: any[];
     startState: MixitupState | null;
     newState: MixitupState | null;
-    docState: ReturnType<typeof import('./helpers').getDocumentState> | null;
+    docState: DocumentState | null;
     willSort: boolean;
     willChangeLayout: boolean;
     hasEffect: boolean;

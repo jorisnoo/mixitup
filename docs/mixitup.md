@@ -1,23 +1,33 @@
-#mixitup()
-
-*Version added: 3.0.0*
+# Mixer factory
 
 `mixitup(container [,config] [,foreignDoc])`
 
 The `mixitup()` "factory" function creates and returns individual instances
 of MixItUp, known as "mixers", on which API methods can be called.
 
-When loading MixItUp via a script tag, the factory function is accessed
-via the global variable `mixitup`. When using a module loading
-system (e.g. ES2015, CommonJS, RequireJS), the factory function is
-exported into your module when you require the MixItUp library.
+The factory is the default export of this ESM-only fork. After [installing the tagged tarball](../README.md#loading-mixitup), import it in your application:
+
+```js
+import mixitup from 'mixitup';
+```
+
+In a browser without a bundler, serve the bundle as a static asset. For example, if you copied `dist/mixitup.js` to `/assets/mixitup.js`:
+
+```html
+<script type="module">
+    import mixitup from '/assets/mixitup.js';
+    const mixer = mixitup('.container');
+</script>
+```
+
+The factory is not a global. There is no CommonJS or RequireJS build, and the upstream v3 extension registration API is not available.
 
 |   |Type | Name | Description
 |---|--- | --- | ---
-|Param   |`Element, string` | `container` | A DOM element or selector string representing the container(s) on which to instantiate MixItUp.
+|Param   |`Element, string` | `container` | A container element or a selector for it.
 |Param   |`object` | `[config]` | An optional "configuration object" used to customize the behavior of the MixItUp instance.
-|Param   |`object` | `[foreignDoc]` | An optional reference to a `document`, which can be used to control a MixItUp instance in an iframe.
-|Returns |`mixitup.Mixer` | A "mixer" object holding the MixItUp instance.
+|Param   |`Document` | `[foreignDoc]` | An optional reference to a document, for example when controlling a container in a same-origin iframe.
+|Returns |`MixitupMixer` | A mixer exposing the public methods.
 
 ###### Example 1: Creating a mixer instance with an element reference
 

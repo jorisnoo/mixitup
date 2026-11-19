@@ -2,7 +2,7 @@
 
 When applying MixItUp to a responsive grid layout, there are a variety of CSS approaches available to us.
 
-This tutorial will cover the pros and cons of the three most common approaches (inline-block, flex-box, and floats), and help you to find the right one for your project.
+This tutorial compares three layouts used in the original v3 demos: inline-block, flexbox and floats. The CSS examples remain useful for existing layouts; their legacy-browser notes do not imply that the ESM fork runs in those browsers.
 
 ## Option 1: Inline-block
 
@@ -21,7 +21,7 @@ Inline-block continues to provide the most robust and consistent method of layin
 - Elements must be same height
 - HTML compression can collapse whitespace and break layout
 
-- [Demo: Inline-block Grid](https://patrickkunka.github.io/mixitup/demos/grid-inline-block)
+- [Demo: Inline-block Grid](../demos/grid-inline-block/index.html)
 
 The inline-block syntax is concise, semantic and easy to understand and essentially allows block-like elements (with explicit height and width) to flow "inline" across a document just like words, wrapping from line to line.
 
@@ -93,7 +93,7 @@ A relative newcomer, flex-box is fast becoming the goto layout method of the fut
 - Modern browsers only
 - Gap elements also required to align final row
 
-- [Demo: Flex-box Grid](https://patrickkunka.github.io/mixitup/demos/grid-flex-box)
+- [Demo: Flex-box Grid](../demos/grid-flex-box/index.html)
 
 Giving us everything that inline-block gives us and much more (and with no whitespace gotchas), flex-box suffers however from a confusing and non-intuitive syntax, and (as of late 2016) continuing browser inconsistencies (see [FlexBugs](https://github.com/philipwalton/flexbugs)).
 
@@ -103,7 +103,7 @@ For simple grids, one of its most useful features is the ability to match the he
 
 Shuffle the grid in the following demo and observe how MixItUp gracefully animates the height of elements in response to row-height changes.
 
-- [Demo: Flex-box Matching Heights](https://patrickkunka.github.io/mixitup/demos/grid-flex-box-matching-heights)
+- [Demo: Flex-box Matching Heights](../demos/grid-flex-box-matching-heights/index.html)
 
 ## Option 3: Floats and Float-based Grid Frameworks
 
@@ -124,7 +124,7 @@ While we don't recommend using floats for MixItUp, it is possible as long as nth
 
 The only way to achieve this sort of layout without using `nth-child` selectors is to reduce the horizontal padding on the parent element by half (equal to the left/right margins of its children), so that when it is combined with the horizontal margins of its children, the grid remains clean and consistent. Mixing adjacent padding and margins is generally a symptom of poor design and makes components less reusable, but in this case it is the best available option without resorting to unnecessary nesting within the child elements.
 
-- [Demo: Float Grid](https://patrickkunka.github.io/mixitup/demos/grid-floats)
+- [Demo: Float Grid](../demos/grid-floats/index.html)
 
 As can be seen in the above demo, the formula for calculating the widths of elements is considerably simpler when margins are explicitly defined.
 

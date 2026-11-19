@@ -1,9 +1,8 @@
-# mixitup.State
+# Mixer state
 
 ## Overview
 
-`mixitup.State` objects expose various pieces of data detailing the state of
-a MixItUp instance. They are provided at the start and end of any operation via
+`MixitupState` describes the state of a mixer. State objects are provided at the start and end of an operation via
 callbacks and events, with the most recent state stored between operations
 for retrieval at any time via the API.
 
@@ -50,7 +49,7 @@ The currently active filter command as set by a control click or API call.
 
 |Type | Default
 |---  | ---
-|`mixitup.CommandFilter`| `null`
+|`CommandFilter`| `null`
 
 
 <h3 id="activeSort">activeSort</h3>
@@ -63,7 +62,7 @@ The currently active sort command as set by a control click or API call.
 
 |Type | Default
 |---  | ---
-|`mixitup.CommandSort`| `null`
+|`CommandSort`| `null`
 
 
 <h3 id="activeContainerClassName">activeContainerClassName</h3>
@@ -123,8 +122,7 @@ An array of all target elements not matching the current filter.
 
 
 
-An array of all target elements matching the current filter and any additional
-limits applied such as pagination.
+An array of target elements shown by the current operation.
 
 
 |Type | Default
@@ -137,8 +135,7 @@ limits applied such as pagination.
 
 
 
-An array of all target elements matching the current filter irrespective of
-any additional limits applied such as pagination.
+An array of target elements matching the current filter.
 
 
 |Type | Default
@@ -165,8 +162,7 @@ mixer. Equivalent to `state.targets.length`.
 
 
 
-An integer representing the total number of target elements matching the
-current filter and any additional limits applied such as pagination.
+The number of target elements shown by the current operation.
 Equivalent to `state.show.length`.
 
 
@@ -194,8 +190,7 @@ the current filter. Equivalent to `state.hide.length`.
 
 
 
-An integer representing the total number of target elements matching the
-current filter irrespective of any other limits applied such as pagination.
+The number of target elements matching the current filter.
 Equivalent to `state.matching.length`.
 
 

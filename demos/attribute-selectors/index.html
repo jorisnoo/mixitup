@@ -35,9 +35,9 @@
             <div class="gap"></div>
         </div>
 
-        <script src="../../dist/mixitup.min.js"></script>
+        <script type="module">
+            import mixitup from '../../dist/mixitup.js';
 
-        <script>
             var containerEl = document.querySelector('[data-ref~="mixitup-container"]');
 
             var mixer = mixitup(containerEl, {

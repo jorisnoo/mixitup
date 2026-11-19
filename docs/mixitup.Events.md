@@ -1,9 +1,8 @@
-# mixitup.Events
+# Mixer events
 
 ## Overview
 
-The `mixitup.Events` class contains all custom events dispatched by MixItUp at various
-points within the lifecycle of a mixer operation.
+MixItUp dispatches custom DOM events at several points in a mixer operation. No event class or namespace import is required.
 
 Each event is analogous to the callback function of the same name defined in
 the `callbacks` configuration object, and is triggered immediately before it.

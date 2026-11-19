@@ -12,7 +12,6 @@ export class Target {
     callback: ((target: Target, operation: Operation) => void) | null = null;
     isShown: boolean = false;
     isBound: boolean = false;
-    isExcluded: boolean = false;
     isInDom: boolean = false;
     handler: ((e: Event) => void) | null = null;
     operation: Operation | null = null;
@@ -36,7 +35,7 @@ export class Target {
         if (data && mixer.config.data.uidKey) {
             const id = data[mixer.config.data.uidKey];
 
-            if (typeof id === 'undefined' || String(id).length < 1) {
+            if (id == null || String(id).length < 1) {
                 throw new TypeError(
                     (messages.errorDatasetInvalidUidKey as Function)({
                         uidKey: mixer.config.data.uidKey,
@@ -44,10 +43,10 @@ export class Target {
                 );
             }
 
-            this.id = id as string;
+            this.id = String(id);
             this.data = data;
 
-            mixer.cache[id as string] = this;
+            mixer.cache[this.id] = this;
         }
     }
 
@@ -62,10 +61,10 @@ export class Target {
 
         const output = render(data);
 
-        if (output && typeof output === 'object' && isElement(output)) {
+        if (output && typeof output === 'object' && isElement(output, this.mixer.dom.document)) {
             return output as Element;
         } else if (typeof output === 'string') {
-            const temp = document.createElement('div');
+            const temp = this.mixer.dom.document.createElement('div');
             temp.innerHTML = output;
 
             return temp.firstElementChild!;
@@ -100,18 +99,6 @@ export class Target {
 
             this.isShown = false;
         }
-    }
-
-    /**
-     * Applies the starting styles of a move. The mixer applies the end styles
-     * (`applyStylesOut`) for all moved targets in a single animation frame.
-     */
-    move(moveData: IMoveData): void {
-        if (!this.isExcluded) {
-            this.mixer.targetsMoved++;
-        }
-
-        this.applyStylesIn(moveData);
     }
 
     applyTween(posData: IMoveData, multiplier: number): void {
@@ -199,7 +186,7 @@ export class Target {
         el.style.transform = transformValues.join(' ');
     }
 
-    applyStylesOut(moveData: IMoveData): void {
+    applyStylesOut(moveData: IMoveData, delay: number): number {
         const transitionRules: string[] = [];
         let transformValues: string[] = [];
         const isResizing = this.mixer.config.animation.animateResizeTargets;
@@ -208,13 +195,13 @@ export class Target {
 
         transitionRules.push(this.writeTransitionRule(
             features.transformRule,
-            moveData.staggerIndex
+            delay
         ));
 
         if (moveData.statusChange !== 'none') {
             transitionRules.push(this.writeTransitionRule(
                 'opacity',
-                moveData.staggerIndex,
+                delay,
                 moveData.duration
             ));
         }
@@ -222,39 +209,27 @@ export class Target {
         if (isResizing) {
             transitionRules.push(this.writeTransitionRule(
                 'width',
-                moveData.staggerIndex,
+                delay,
                 moveData.duration
             ));
 
             transitionRules.push(this.writeTransitionRule(
                 'height',
-                moveData.staggerIndex,
+                delay,
                 moveData.duration
             ));
 
             transitionRules.push(this.writeTransitionRule(
                 'margin',
-                moveData.staggerIndex,
+                delay,
                 moveData.duration
             ));
-        }
-
-        if (!moveData.callback) {
-            this.mixer.targetsImmovable++;
-
-            if (this.mixer.targetsMoved === this.mixer.targetsImmovable) {
-                this.mixer.cleanUp(moveData.operation);
-            }
-
-            return;
         }
 
         this.operation = moveData.operation as Operation;
         this.callback = moveData.callback as (target: Target, operation: Operation) => void;
 
-        if (!this.isExcluded) {
-            this.mixer.targetsBound++;
-        }
+        this.mixer.targetsBound++;
 
         this.isBound = true;
 
@@ -296,11 +271,11 @@ export class Target {
         }
 
         el.style.transform = transformValues.join(' ');
+
+        return delay + Math.max(this.mixer.config.animation.duration, moveData.duration);
     }
 
-    writeTransitionRule(property: string, staggerIndex: number, duration?: number): string {
-        const delay = this.getDelay(staggerIndex);
-
+    private writeTransitionRule(property: string, delay: number, duration?: number): string {
         return property + ' ' +
             (duration && duration > 0 ? duration : this.mixer.config.animation.duration) + 'ms ' +
             delay + 'ms ' +
@@ -327,7 +302,7 @@ export class Target {
 
         if (
             this.isBound &&
-            (e.target as Element).matches(this.mixer.config.selectors.target) &&
+            e.target === this.dom.el &&
             (
                 propName.indexOf('transform') > -1 ||
                 propName.indexOf('opacity') > -1 ||
@@ -336,27 +311,29 @@ export class Target {
                 (canResize && propName.indexOf('margin') > -1)
             )
         ) {
-            this.callback!.call(this, this as any, this.operation!);
-
+            const callback = this.callback!;
+            const operation = this.operation!;
             this.isBound = false;
             this.callback = null;
             this.operation = null;
+            callback(this, operation);
         }
     }
 
     bindEvents(): void {
         this.handler = (e: Event) => {
-            if (e.type === 'transitionend') {
-                this.handleTransitionEnd(e as TransitionEvent);
-            }
+            this.handleTransitionEnd(e as TransitionEvent);
         };
 
         this.dom.el!.addEventListener('transitionend', this.handler);
+        this.dom.el!.addEventListener('transitioncancel', this.handler);
     }
 
     unbindEvents(): void {
         if (this.handler) {
             this.dom.el!.removeEventListener('transitionend', this.handler);
+            this.dom.el!.removeEventListener('transitioncancel', this.handler);
+            this.handler = null;
         }
     }
 
@@ -395,7 +372,7 @@ export class Target {
         }
 
         if (this.mixer.config.animation.animateResizeTargets) {
-            const styles = window.getComputedStyle(el);
+            const styles = el.ownerDocument.defaultView!.getComputedStyle(el);
 
             posData.marginBottom = parseFloat(styles.marginBottom);
             posData.marginRight = parseFloat(styles.marginRight);
@@ -406,6 +383,10 @@ export class Target {
 
     cleanUp(): void {
         const el = this.dom.el as HTMLElement;
+
+        this.isBound = false;
+        this.callback = null;
+        this.operation = null;
 
         el.style.transform = '';
         el.style.transition = '';

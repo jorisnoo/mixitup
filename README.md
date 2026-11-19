@@ -2,8 +2,6 @@
 
 > A modernised fork of [patrickkunka/mixitup](https://github.com/patrickkunka/mixitup), rewritten in TypeScript with modern tooling (Vite, Vitest). ESM-only, targeting modern browsers.
 
-[![Latest Release](https://img.shields.io/npm/v/mixitup.svg?style=flat-square)](https://www.npmjs.com/package/mixitup)
-
 MixItUp is a high-performance, dependency-free library for animated DOM manipulation, giving you the power to filter, sort, add and remove DOM elements with beautiful animations.
 
 MixItUp plays nice with your existing HTML and CSS, making it a great choice for responsive layouts and compatible with inline-flow, percentages, media queries, flexbox and more.
@@ -114,7 +112,7 @@ Sort controls are queried based on the presence of a `data-sort` attribute, whos
 
 ```html
 <button type="button" data-sort="order:asc">Ascending</button>
-<button type="button" data-sort="order:descending">Descending</button>
+<button type="button" data-sort="order:desc">Descending</button>
 <button type="button" data-sort="random">Random</button>
 ```
 
@@ -130,13 +128,13 @@ Further reading: [MixItUp Grid Layouts](./tutorials/mixitup-grid-layouts.md)
 
 ### Loading MixItUp
 
-Install MixItUp via your package manager of choice:
+Install the fork from its tagged GitHub tarball. The `mixitup` package on the npm registry is upstream v3, not this fork.
 
-```
-npm install mixitup
+```sh
+npm install https://github.com/jorisnoo/mixitup/archive/refs/tags/4.0.2.tar.gz
 ```
 
-Then import it as an ES module:
+The installed package is named `mixitup`. In a bundled application, import its default export:
 
 ```js
 import mixitup from 'mixitup';
@@ -147,6 +145,8 @@ This fork is distributed as an ESM bundle with TypeScript declarations included.
 ```ts
 import type { MixitupConfig, MixitupState, MixitupMixer } from 'mixitup';
 ```
+
+Without a bundler, copy `dist/mixitup.js` into your site's assets and import its URL from a `<script type="module">`. There is no global `mixitup` or CommonJS build. Upstream v3 extensions such as Pagination and MultiFilter are not supported.
 
 ### Creating a Mixer
 
@@ -203,9 +203,7 @@ Further reading: [Mixer API Methods](./docs/mixitup.Mixer.md)
 
 #### Building a modern JavaScript application?
 
-You may wish to use MixItUp's "dataset" API. Dataset is designed for use in API-driven JavaScript applications, and can be used instead of DOM-based methods such as `.filter()`, `.sort()`, `.insert()`, etc. When used, insertion, removal, sorting and pagination can be achieved purely via changes to your data model, without the uglyness of having to interact with or query the DOM directly.
-
-Further reading: [Using the Dataset API](./tutorials/using-the-dataset-api.md)
+Use the [Dataset API](./tutorials/using-the-dataset-api.md) when your application already owns the data. Pass the items you want to display, in display order, to `mixer.dataset(items)`; the mixer animates the difference.
 
 ## Development
 
@@ -216,6 +214,10 @@ npm run build
 ```
 
 Produces an ESM bundle at `dist/mixitup.js` with source maps and TypeScript declarations in `dist/types/`.
+
+### Browser examples
+
+From the repository root, run `python3 -m http.server --bind 127.0.0.1` and open [the demos](http://127.0.0.1:8000/demos/) or [the functional harness](http://127.0.0.1:8000/tests/functional/). They import the committed `dist/mixitup.js` over HTTP; opening their HTML files directly does not work in browsers that block `file:` module imports.
 
 ### Testing
 

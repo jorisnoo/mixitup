@@ -38,9 +38,9 @@
             <div class="gap"></div>
         </div>
 
-        <script src="../../dist/mixitup.min.js"></script>
+        <script type="module">
+            import mixitup from '../../dist/mixitup.js';
 
-        <script>
             // In this example, we must bind 'change' event handlers to
             // our <select> elements, then interact with the mixer via
             // its .filter() and .sort() API methods.

@@ -32,9 +32,9 @@
             <div class="gap"></div>
         </div>
 
-        <script src="../../dist/mixitup.min.js"></script>
+        <script type="module">
+            import mixitup from '../../dist/mixitup.js';
 
-        <script>
             // As we have no server-side application or routes, we will use
             // a URL "hash" for this demo, but we chould just as easily use
             // a URL route segment.
@@ -54,22 +54,21 @@
 
             function getSelectorFromHash() {
                 var hash = window.location.hash.replace(/^#/g, '');
+                if (hash === 'none') return 'none';
 
-                var selector = hash ? '.' + hash : targetSelector;
-
-                return selector;
+                return ['green', 'blue', 'pink'].includes(hash) ? '.' + hash : targetSelector;
             }
 
             /**
              * Updates the URL whenever the current filter changes.
              *
-             * @param   {mixitup.State} state
+             * @param   {import('../../dist/types/index').MixitupState} state
              * @return  {void}
              */
 
             function setHash(state) {
                 var selector = state.activeFilter.selector;
-                var newHash = '#' + selector.replace(/^\./g, '');
+                var newHash = '#' + (selector.replace(/^\./, '') || 'none');
 
                 if (selector === targetSelector && window.location.hash) {
                     // Equivalent to filter "all", remove the hash

@@ -60,9 +60,9 @@
             <div class="gap"></div>
         </div>
 
-        <script src="../../dist/mixitup.min.js"></script>
+        <script type="module">
+            import mixitup from '../../dist/mixitup.js';
 
-        <script>
             // In this example, we must bind a 'change' event handler to
             // our radios, then interact with the mixer via
             // its .filter() API methods.
